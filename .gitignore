@@ -12,6 +12,8 @@ dist/
 # Node / TypeScript
 node_modules/
 typescript/dist/
+# 消費者は pnpm 前提（git-subdir対応）。開発で npm を使った場合の lock は混在回避のため無視。
+package-lock.json
 
 # OS
 .DS_Store

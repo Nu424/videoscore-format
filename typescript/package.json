@@ -1,0 +1,30 @@
+{
+  "name": "videoscore",
+  "version": "0.0.1",
+  "description": "VideoScore intermediate format — TypeScript types (generated from the pydantic source of truth)",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "gen": "node scripts/gen-types.mjs",
+    "gen:check": "node scripts/gen-types.mjs --check",
+    "build": "tsc -p tsconfig.json",
+    "prepare": "tsc -p tsconfig.json"
+  },
+  "license": "MIT",
+  "packageManager": "pnpm@9.0.0",
+  "devDependencies": {
+    "json-schema-to-typescript": "^15",
+    "typescript": "^5.5"
+  }
+}
