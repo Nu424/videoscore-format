@@ -1,0 +1,950 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "AudioElement": {
+      "additionalProperties": false,
+      "description": "音声（§2, §6）。role で voice/se/music/ambient を区別する。",
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "t": {
+          "anyOf": [
+            {
+              "maxItems": 3,
+              "minItems": 3,
+              "prefixItems": [
+                {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "const": "after",
+                      "type": "string"
+                    },
+                    {
+                      "$ref": "#/$defs/RefObject"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "enum": [
+                        "auto",
+                        "after"
+                      ],
+                      "type": "string"
+                    },
+                    {
+                      "$ref": "#/$defs/RefObject"
+                    }
+                  ]
+                },
+                {
+                  "$ref": "#/$defs/Gap"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "const": "after",
+                      "type": "string"
+                    },
+                    {
+                      "$ref": "#/$defs/RefObject"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "enum": [
+                        "auto",
+                        "after"
+                      ],
+                      "type": "string"
+                    },
+                    {
+                      "$ref": "#/$defs/RefObject"
+                    }
+                  ]
+                }
+              ],
+              "type": "array"
+            }
+          ],
+          "title": "T"
+        },
+        "style": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Style"
+        },
+        "params": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Params"
+        },
+        "marks": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Marks"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "in": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "In"
+        },
+        "out": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Out"
+        },
+        "role": {
+          "enum": [
+            "voice",
+            "se",
+            "music",
+            "ambient"
+          ],
+          "title": "Role",
+          "type": "string"
+        }
+      },
+      "required": [
+        "t",
+        "source",
+        "role"
+      ],
+      "title": "AudioElement",
+      "type": "object"
+    },
+    "Gap": {
+      "additionalProperties": false,
+      "description": "`t` の第3要素として置くギャップ指定（§3「`[\"after\", \"auto\", { \"gap\": 0.3 }]`」）。",
+      "properties": {
+        "gap": {
+          "title": "Gap",
+          "type": "number"
+        }
+      },
+      "required": [
+        "gap"
+      ],
+      "title": "Gap",
+      "type": "object"
+    },
+    "Meta": {
+      "additionalProperties": false,
+      "description": "ドキュメントのメタ情報（§8）。",
+      "properties": {
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "fps": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fps"
+        },
+        "size": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Size"
+        },
+        "styleCatalog": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stylecatalog"
+        }
+      },
+      "title": "Meta",
+      "type": "object"
+    },
+    "OverlayElement": {
+      "additionalProperties": false,
+      "description": "画像/動画オーバーレイ（PiP）（§2）。",
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "t": {
+          "anyOf": [
+            {
+              "maxItems": 3,
+              "minItems": 3,
+              "prefixItems": [
+                {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "const": "after",
+                      "type": "string"
+                    },
+                    {
+                      "$ref": "#/$defs/RefObject"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "enum": [
+                        "auto",
+                        "after"
+                      ],
+                      "type": "string"
+                    },
+                    {
+                      "$ref": "#/$defs/RefObject"
+                    }
+                  ]
+                },
+                {
+                  "$ref": "#/$defs/Gap"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "const": "after",
+                      "type": "string"
+                    },
+                    {
+                      "$ref": "#/$defs/RefObject"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "enum": [
+                        "auto",
+                        "after"
+                      ],
+                      "type": "string"
+                    },
+                    {
+                      "$ref": "#/$defs/RefObject"
+                    }
+                  ]
+                }
+              ],
+              "type": "array"
+            }
+          ],
+          "title": "T"
+        },
+        "style": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Style"
+        },
+        "params": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Params"
+        },
+        "marks": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Marks"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "in": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "In"
+        },
+        "out": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Out"
+        }
+      },
+      "required": [
+        "t",
+        "source"
+      ],
+      "title": "OverlayElement",
+      "type": "object"
+    },
+    "RefObject": {
+      "additionalProperties": false,
+      "description": "他要素のマーク参照、またはレーン参照（§3）。\n\n例: `{ \"ref\": \"v1.end\", \"offset\": 0.2 }` / `{ \"ref\": \"audio.end\" }`\n参照先 id は同一シーン内に限る（可視範囲ルール）が、その検証は解決側で行う。",
+      "properties": {
+        "ref": {
+          "title": "Ref",
+          "type": "string"
+        },
+        "offset": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Offset"
+        }
+      },
+      "required": [
+        "ref"
+      ],
+      "title": "RefObject",
+      "type": "object"
+    },
+    "Scene": {
+      "additionalProperties": false,
+      "description": "1シーン＝1つのローカル時計（§1）。4レーンを持つ唯一の器。",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "duration": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/RefObject"
+            }
+          ],
+          "title": "Duration"
+        },
+        "video": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/VideoElement"
+          },
+          "title": "Video",
+          "type": "array"
+        },
+        "audio": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/AudioElement"
+          },
+          "title": "Audio",
+          "type": "array"
+        },
+        "telop": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/TelopElement"
+          },
+          "title": "Telop",
+          "type": "array"
+        },
+        "overlay": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/OverlayElement"
+          },
+          "title": "Overlay",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "duration"
+      ],
+      "title": "Scene",
+      "type": "object"
+    },
+    "TelopElement": {
+      "additionalProperties": false,
+      "description": "テロップ（§2）。表示文字 text を持ち、source/in/out は持たない。",
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "t": {
+          "anyOf": [
+            {
+              "maxItems": 3,
+              "minItems": 3,
+              "prefixItems": [
+                {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "const": "after",
+                      "type": "string"
+                    },
+                    {
+                      "$ref": "#/$defs/RefObject"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "enum": [
+                        "auto",
+                        "after"
+                      ],
+                      "type": "string"
+                    },
+                    {
+                      "$ref": "#/$defs/RefObject"
+                    }
+                  ]
+                },
+                {
+                  "$ref": "#/$defs/Gap"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "const": "after",
+                      "type": "string"
+                    },
+                    {
+                      "$ref": "#/$defs/RefObject"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "enum": [
+                        "auto",
+                        "after"
+                      ],
+                      "type": "string"
+                    },
+                    {
+                      "$ref": "#/$defs/RefObject"
+                    }
+                  ]
+                }
+              ],
+              "type": "array"
+            }
+          ],
+          "title": "T"
+        },
+        "style": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Style"
+        },
+        "params": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Params"
+        },
+        "marks": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Marks"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "t",
+        "text"
+      ],
+      "title": "TelopElement",
+      "type": "object"
+    },
+    "VideoElement": {
+      "additionalProperties": false,
+      "description": "映像クリップ（§2）。",
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "t": {
+          "anyOf": [
+            {
+              "maxItems": 3,
+              "minItems": 3,
+              "prefixItems": [
+                {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "const": "after",
+                      "type": "string"
+                    },
+                    {
+                      "$ref": "#/$defs/RefObject"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "enum": [
+                        "auto",
+                        "after"
+                      ],
+                      "type": "string"
+                    },
+                    {
+                      "$ref": "#/$defs/RefObject"
+                    }
+                  ]
+                },
+                {
+                  "$ref": "#/$defs/Gap"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "const": "after",
+                      "type": "string"
+                    },
+                    {
+                      "$ref": "#/$defs/RefObject"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "enum": [
+                        "auto",
+                        "after"
+                      ],
+                      "type": "string"
+                    },
+                    {
+                      "$ref": "#/$defs/RefObject"
+                    }
+                  ]
+                }
+              ],
+              "type": "array"
+            }
+          ],
+          "title": "T"
+        },
+        "style": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Style"
+        },
+        "params": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Params"
+        },
+        "marks": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Marks"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "in": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "In"
+        },
+        "out": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Out"
+        }
+      },
+      "required": [
+        "t",
+        "source"
+      ],
+      "title": "VideoElement",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "VideoScore ドキュメントのルート（§1, §8）。",
+  "properties": {
+    "meta": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Meta"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "video": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/VideoElement"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Video"
+    },
+    "audio": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/AudioElement"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Audio"
+    },
+    "telop": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/TelopElement"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Telop"
+    },
+    "overlay": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/OverlayElement"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Overlay"
+    },
+    "scenes": {
+      "items": {
+        "$ref": "#/$defs/Scene"
+      },
+      "title": "Scenes",
+      "type": "array"
+    }
+  },
+  "required": [
+    "scenes"
+  ],
+  "title": "VideoScore",
+  "type": "object"
+}

@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "StyleEntry": {
+      "additionalProperties": false,
+      "description": "カタログ1エントリ（意味の層）。`intent`/`feeling` は「いつ・どんな気分で使うか」。",
+      "properties": {
+        "intent": {
+          "title": "Intent",
+          "type": "string"
+        },
+        "feeling": {
+          "title": "Feeling",
+          "type": "string"
+        },
+        "appliesTo": {
+          "items": {
+            "enum": [
+              "video",
+              "audio",
+              "telop",
+              "overlay"
+            ],
+            "type": "string"
+          },
+          "title": "Appliesto",
+          "type": "array"
+        },
+        "params": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Params"
+        },
+        "example": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Example"
+        }
+      },
+      "required": [
+        "intent",
+        "feeling",
+        "appliesTo"
+      ],
+      "title": "StyleEntry",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "`style-catalog.json` ルート（§5）。印 id → StyleEntry。",
+  "properties": {
+    "styles": {
+      "additionalProperties": {
+        "$ref": "#/$defs/StyleEntry"
+      },
+      "title": "Styles",
+      "type": "object"
+    }
+  },
+  "required": [
+    "styles"
+  ],
+  "title": "StyleCatalog",
+  "type": "object"
+}
