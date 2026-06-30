@@ -1,0 +1,57 @@
+{
+  "meta": {
+    "title": "サンプル動画",
+    "fps": 30,
+    "size": [1920, 1080],
+    "styleCatalog": "style-catalog.json"
+  },
+  "scenes": [
+    {
+      "id": "s1",
+      "duration": { "ref": "audio.end" },
+      "video": [
+        { "source": "broll.mp4", "in": 5, "out": 12, "t": [0, "auto"] }
+      ],
+      "audio": [
+        { "id": "v1", "role": "voice", "source": "tts://今日は", "t": [0, "auto"] },
+        { "id": "v2", "role": "voice", "source": "tts://重要な話を", "t": ["after", "auto"] },
+        { "role": "voice", "source": "tts://します", "t": ["after", "auto"] }
+      ],
+      "telop": [
+        { "t": [0, { "ref": "v1.end" }], "text": "今日は", "style": "tone.emphasis" },
+        { "t": [{ "ref": "v2.start" }, { "ref": "v2.end" }], "text": "重要な話を", "style": "tone.emphasis" }
+      ],
+      "overlay": [
+        { "source": "logo.png", "t": [0.5, "auto"], "style": "position.corner" }
+      ]
+    },
+    {
+      "id": "s2",
+      "duration": { "ref": "video.end" },
+      "video": [
+        { "source": "a.mp4", "in": 0, "out": 4, "t": [0, "auto"] },
+        { "source": "b.mp4", "in": 10, "out": 13, "t": ["after", "auto"] }
+      ],
+      "telop": [
+        { "t": [1.0, 6.0], "text": "カットを跨ぐテロップ", "style": "telop.default" }
+      ],
+      "audio": [
+        { "role": "se", "source": "whoosh.wav", "t": [3.5, "auto"] }
+      ]
+    },
+    {
+      "id": "s3",
+      "duration": 5,
+      "video": [
+        { "source": "left.mp4", "in": 0, "out": 5, "t": [0, "auto"], "style": "layout.split-left" },
+        { "source": "right.mp4", "in": 0, "out": 5, "t": [0, "auto"], "style": "layout.split-right" }
+      ],
+      "telop": [
+        { "t": [0.5, 4.5], "text": "比較", "style": "tone.emphasis" }
+      ],
+      "overlay": [
+        { "id": "pip1", "source": "insert.mp4", "in": 2, "out": 6, "t": [1.0, "auto"], "marks": ["pip_end"] }
+      ]
+    }
+  ]
+}

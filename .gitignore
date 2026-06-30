@@ -1,0 +1,18 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+.mypy_cache/
+.ruff_cache/
+
+# Node / TypeScript
+node_modules/
+typescript/dist/
+
+# OS
+.DS_Store
+Thumbs.db

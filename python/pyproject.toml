@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "videoscore"
+version = "0.0.1"
+description = "VideoScore intermediate format — type definitions and validation (Python source of truth)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "pydantic>=2,<3",
+]
+
+[project.optional-dependencies]
+# VideoScore -> OTIO 解決スクリプト用（将来 videoscore.resolve / .otio が使う）。
+# 型(videoscore.model)だけ欲しい利用者に opentimelineio を引かせないため optional。
+otio = [
+    "OpenTimelineIO>=0.17",
+]
+dev = [
+    "pytest>=8",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/videoscore"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

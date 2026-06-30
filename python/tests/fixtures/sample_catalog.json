@@ -1,0 +1,53 @@
+{
+  "styles": {
+    "telop.default": {
+      "intent": "通常のテロップ。特別な強調がないとき。",
+      "feeling": "標準・中立",
+      "appliesTo": ["telop"],
+      "params": null,
+      "example": "ふつうの説明字幕"
+    },
+    "tone.emphasis": {
+      "intent": "視聴者に一番伝えたい一言。目を引かせたいとき。",
+      "feeling": "強い・はっきり・前に出る",
+      "appliesTo": ["telop"],
+      "params": null,
+      "example": "決め台詞"
+    },
+    "highlight": {
+      "intent": "テロップ内の特定の語だけを際立たせたいとき。",
+      "feeling": "部分的に目を引く",
+      "appliesTo": ["telop"],
+      "params": { "target": { "type": "string", "desc": "強調する語" } },
+      "example": "「ここが【重要】です」の重要だけ"
+    },
+    "position.corner": {
+      "intent": "ロゴや補助情報を隅に小さく置きたいとき。",
+      "feeling": "控えめ・常駐",
+      "appliesTo": ["overlay"],
+      "params": null,
+      "example": "右上のチャンネルロゴ"
+    },
+    "layout.split-left": {
+      "intent": "スプリットスクリーンの左側に配置したいとき。",
+      "feeling": "並列・対比",
+      "appliesTo": ["video"],
+      "params": null,
+      "example": "ビフォーアフターの左"
+    },
+    "layout.split-right": {
+      "intent": "スプリットスクリーンの右側に配置したいとき。",
+      "feeling": "並列・対比",
+      "appliesTo": ["video"],
+      "params": null,
+      "example": "ビフォーアフターの右"
+    },
+    "audio.default": {
+      "intent": "通常の音声。加工なし。",
+      "feeling": "素の音",
+      "appliesTo": ["audio"],
+      "params": null,
+      "example": "そのままのナレーション"
+    }
+  }
+}
