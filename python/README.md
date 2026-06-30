@@ -8,6 +8,48 @@ VideoScore 中間構造の型定義と検証。**Pydantic v2 を Single Source o
 
 仕様の一次ソースは [`../documents/intermediate-structure-guideline.md`](../documents/intermediate-structure-guideline.md)。
 
+## クイックスタート
+
+```python
+import json
+from videoscore.model import VideoScore, StyleCatalog, validate_styles
+
+# 1. JSON から読み込む（パース＋検証が同時に走る）
+doc = VideoScore.model_validate_json("""
+{
+  "meta": { "title": "サンプル", "fps": 30, "size": [1920, 1080] },
+  "scenes": [
+    {
+      "id": "s1",
+      "duration": { "ref": "audio.end" },
+      "audio": [
+        { "id": "v1", "role": "voice", "source": "tts://まずは結論から", "t": [0, "auto"] }
+      ],
+      "telop": [
+        { "t": [0, { "ref": "v1.end" }], "text": "まずは結論から", "style": "tone.emphasis" }
+      ]
+    }
+  ]
+}
+""")
+
+# 2. 構造にアクセス（時間語彙 "auto"/"after"/{ref} は脱糖されず素のまま）
+print(doc.scenes[0].audio[0].t)        # (0.0, 'auto')
+print(doc.scenes[0].telop[0].t[1])     # ref='v1.end' offset=None
+
+# 3. 最小 JSON として出力（None・空レーンを省き、in 等はエイリアスで）
+print(json.dumps(doc.to_json_dict(), ensure_ascii=False, indent=2))
+
+# 4. スタイルをカタログと突き合わせる（§7 enum / appliesTo）
+catalog = StyleCatalog.model_validate({
+    "styles": {"tone.emphasis": {"intent": "決め台詞", "feeling": "強い", "appliesTo": ["telop"]}}
+})
+issues = validate_styles(doc, catalog)   # 問題のリスト（空なら OK）
+print(issues)
+```
+
+→ 組み立て・検証エラー例まで含む実行可能ノートブック: [`examples/quickstart.ipynb`](examples/quickstart.ipynb)
+
 ## インストール（git 経由）
 
 ```bash
@@ -16,23 +58,7 @@ pip install "git+https://github.com/Nu424/videoscore-format.git#subdirectory=pyt
 pip install "videoscore[otio] @ git+https://github.com/Nu424/videoscore-format.git#subdirectory=python"
 ```
 
-## 使い方
-
-```python
-from videoscore.model import VideoScore, StyleCatalog, validate_styles
-
-doc = VideoScore.model_validate_json(open("video.json", encoding="utf-8").read())
-
-# 出力（最小・素の形: None と空レーンを省き、in 等はエイリアスで）
-data = doc.to_json_dict()
-
-# カタログ横断検証（§7 enum / appliesTo）
-catalog = StyleCatalog.model_validate_json(open("style-catalog.json", encoding="utf-8").read())
-for issue in validate_styles(doc, catalog):
-    print(issue)
-```
-
-### 設計の要点
+## 設計の要点
 
 - 時間語彙（§3）は**脱糖しない**。`after` / `auto` / `ref` / `gap` 形は素のまま保持し、
   脱糖・時間解決は解決スクリプト（`videoscore.resolve`、将来）の責務。

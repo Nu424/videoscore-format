@@ -27,6 +27,37 @@ pydantic models (SoT)
 | `typescript/` | JSON Schema から生成した TypeScript 型（コミット済み生成物） |
 | `.github/workflows/` | CI（テスト＋生成物のドリフト検知） |
 
+## クイックスタート
+
+同じ VideoScore JSON を、Python では検証付きで読み、TypeScript では型付きで書ける。
+
+```python
+# Python: 読み込み（パース＋検証）→ アクセス → カタログ検証
+from videoscore.model import VideoScore, StyleCatalog, validate_styles
+
+doc = VideoScore.model_validate_json(open("video.json", encoding="utf-8").read())
+print(doc.scenes[0].audio[0].t)          # (0.0, 'auto') — 時間語彙は素のまま
+issues = validate_styles(doc, catalog)   # §7 enum / appliesTo（空なら OK）
+```
+
+```ts
+// TypeScript: 型付きで構築（start に "auto" を書くと型エラー）
+import type { VideoScore } from 'videoscore'
+
+const doc: VideoScore = {
+  scenes: [
+    {
+      id: 's1',
+      duration: { ref: 'audio.end' },
+      audio: [{ id: 'v1', role: 'voice', source: 'tts://a', t: [0, 'auto'] }],
+      telop: [{ t: [0, { ref: 'v1.end' }], text: 'a', style: 'tone.emphasis' }],
+    },
+  ],
+}
+```
+
+各言語のより詳しい例: [`python/README.md`](python/README.md)（＋ [`python/examples/quickstart.ipynb`](python/examples/quickstart.ipynb)）/ [`typescript/README.md`](typescript/README.md)。
+
 ## インストール（git 経由）
 
 ### Python
@@ -41,13 +72,6 @@ pip install "git+https://github.com/Nu424/videoscore-format.git#subdirectory=pyt
 pip install "videoscore[otio] @ git+https://github.com/Nu424/videoscore-format.git#subdirectory=python"
 ```
 
-```python
-from videoscore.model import VideoScore, StyleCatalog, validate_styles
-
-doc = VideoScore.model_validate_json(open("video.json", encoding="utf-8").read())
-issues = validate_styles(doc, catalog)   # §7 enum / appliesTo
-```
-
 ### TypeScript（pnpm 9+）
 
 素の npm は git のサブディレクトリ指定が弱いため **pnpm**（または yarn）を使う。
@@ -55,12 +79,6 @@ issues = validate_styles(doc, catalog)   # §7 enum / appliesTo
 ```bash
 pnpm add "Nu424/videoscore-format#path:/typescript"
 # ブランチ/タグ指定: "Nu424/videoscore-format#main&path:/typescript"
-```
-
-```ts
-import type { VideoScore } from 'videoscore'
-
-const doc: VideoScore = { /* ... */ }
 ```
 
 ## 開発

@@ -12,16 +12,21 @@
 台本 / アウトライン  →  構成（★この中間構造）  →  タイムライン  →  レンダ
 ```
 
-現状は**設計・ドキュメント段階**。実装コード（パーサ・コンパイラ・バリデータ）はまだ無い。
-成果物は主に Markdown ドキュメントと、それを使う Agent Skill。
+現状は**仕様＋型実装の段階**。VideoScore 形式を Python / TypeScript の型として扱う基盤まで実装済み。
+最終目標は「VideoScore 形式 → 各記述を解決 → OTIO 生成」。その解決スクリプト（`videoscore.resolve`）は未着手。
 
 ## リポジトリ構成
 
 | パス | 役割 |
 |------|------|
 | `documents/intermediate-structure-guideline.md` | 中間構造の**正式仕様書**。設計判断・時間モデル・検証ルールの一次ソース |
+| `documents/work-logs/` | 作業ログ（実装の経緯・決定事項） |
 | `.claude/videoscore-format-skill/SKILL.md` | 台本→中間構造JSONを**組み立てる手順書**（Agent Skill） |
 | `.claude/videoscore-format-skill/references/spec.md` | スキルから参照する仕様。現状 guideline と同一内容 |
+| `python/` | **型本体（pydantic）と検証**。型の Single Source of Truth。将来 OTIO 解決もここに |
+| `schema/` | pydantic から生成した JSON Schema（**生成物**・コミット済み） |
+| `typescript/` | JSON Schema から生成した TypeScript 型（**生成物**・コミット済み） |
+| `.github/workflows/ci.yml` | CI（pytest ＋ 生成物のドリフト検知） |
 
 > 注意：`guideline.md` と `spec.md` は今は同じ内容。仕様を直すときは**両方の同期**を意識する
 > （将来どちらを SoT にするか決めるまでは二重管理になっている点に留意）。
@@ -43,6 +48,36 @@
 
 仕様を変更・拡張するときは、仕様書 §9（設計判断の早見表）と §10（保留事項）に必ず目を通し、
 既存の設計意図と矛盾しないか確認する。新しい決定をしたら早見表・保留事項を更新する。
+
+## 型実装と生成パイプライン
+
+**型は Python（pydantic v2）が Single Source of Truth。** ここから JSON Schema → TypeScript 型を生成する。
+
+```
+pydantic models (python/src/videoscore/model)   ← 唯一の正
+   └─ schema/*.json        （videoscore-gen-schema で生成）
+        └─ typescript/src/*.gen.ts   （pnpm gen で生成）
+```
+
+- **型を変えるときは必ず pydantic を直す。** `schema/*.json` と `typescript/src/*.gen.ts` は生成物なので手編集しない。
+  変更後は `videoscore-gen-schema` → `pnpm gen` の順で再生成し、生成物も一緒にコミットする。
+- **時間語彙は脱糖しない。** `after`/`auto`/`ref`/`gap` 形は素のまま保持。脱糖・時間解決は将来の `videoscore.resolve` の責務。
+  循環防止の鉄則（`start` に `auto` 不可）は Python・TS の**両方の型**に焼き込んである。
+- **OTIO 依存は optional extra `[otio]`。** 型だけ使う利用者に `opentimelineio` を引かせない。
+- **json2ts の落とし穴**: draft 2020-12 の `prefixItems`（タプル）未サポートで `t` が `unknown` に劣化する。
+  `typescript/scripts/gen-types.mjs` の前処理シム（prefixItems→draft-07 items、title アノテーション除去）で回避済み。
+  生成器を差し替えるときはこの制約に注意。
+
+開発コマンド（詳細は各 README）:
+
+```bash
+cd python && pip install -e ".[dev]" && pytest          # 型・検証・ドリフトのテスト
+videoscore-gen-schema --out-dir ../schema               # ① pydantic → JSON Schema
+cd ../typescript && pnpm install && pnpm gen && pnpm build   # ② JSON Schema → TS 型
+```
+
+CI は `videoscore-gen-schema --check` と `pnpm gen:check` で「生成物がモデルと一致しているか」を検証する。
+モデルを変えて再生成し忘れると CI が落ちる。
 
 ## 開発の進め方（このリポジトリの作業フロー）
 
