@@ -3,6 +3,10 @@
 絵コンテ的な VideoScore（過少指定）を、段階的に清書方向へ具体化する **解決パイプライン**の設計。
 仕様の一次ソースは [`intermediate-structure-guideline.md`](intermediate-structure-guideline.md)。本書はその解決系の設計を定める。
 
+> 状況（2026-07-01）: 本設計は **実装済み**（`python/src/videoscore/resolve/`、テスト `python/tests/test_resolve.py`、
+> サンプル `python/examples/resolve_pipeline.py`）。本スコープ（収束4パス＋mock プロバイダ）を満たす。
+> 補完パス・実プロバイダ・各形式コンバータは未着手（§6・§1）。
+
 ## 0. 方針（合意済み）
 
 - **出力は VideoScore（OTIO ではない）。** VideoScore はスタイル等の意味情報を持つため、一度 OTIO に落とすと

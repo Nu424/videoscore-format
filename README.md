@@ -8,6 +8,13 @@
 台本 / アウトライン  →  構成（★VideoScore 形式）  →  タイムライン  →  レンダ
 ```
 
+解決は VideoScore の中で閉じる。スタイル等の意味情報を保つため、OTIO 直行はしない:
+
+```
+VideoScore（絵コンテ）  →  解決済み VideoScore（清書）  →  各種形式（OTIO / aup2 …）
+                        ↑ videoscore.resolve            ↑ 将来のコンバータ
+```
+
 - **仕様の一次ソース**: [`documents/intermediate-structure-guideline.md`](documents/intermediate-structure-guideline.md)
 - **型の Single Source of Truth**: Python（pydantic v2）。ここから JSON Schema と TypeScript 型を生成する。
 
@@ -22,7 +29,7 @@ pydantic models (SoT)
 |------|------|
 | `documents/` | 仕様書（設計判断・時間モデル・検証ルール） |
 | `.claude/videoscore-format-skill/` | 台本→中間構造JSONを組み立てる Agent Skill |
-| `python/` | **型本体（pydantic）と検証**。SoT。将来 OTIO 解決もここに |
+| `python/` | **型本体（pydantic）と検証**（SoT）＋**解決系 `videoscore.resolve`** |
 | `schema/` | pydantic から生成した JSON Schema（コミット済み生成物） |
 | `typescript/` | JSON Schema から生成した TypeScript 型（コミット済み生成物） |
 | `.github/workflows/` | CI（テスト＋生成物のドリフト検知） |
@@ -56,7 +63,17 @@ const doc: VideoScore = {
 }
 ```
 
-各言語のより詳しい例: [`python/README.md`](python/README.md)（＋ [`python/examples/quickstart.ipynb`](python/examples/quickstart.ipynb)）/ [`typescript/README.md`](typescript/README.md)。
+Python では、絵コンテ的な記述（`after`/`auto`/`ref`/`tts://…`）を解決済み VideoScore へ具体化できる:
+
+```python
+# Python: 絵コンテ VideoScore → 解決済み VideoScore（時間は全部具体・スタイルは意味のまま）
+from videoscore.resolve import resolve
+
+resolved, diagnostics = resolve(doc)     # 既定は mock プロバイダ入り
+print(resolved.scenes[0].duration)       # audio.end 等が数値に解決される
+```
+
+各言語のより詳しい例: [`python/README.md`](python/README.md)（型 [`examples/quickstart.ipynb`](python/examples/quickstart.ipynb) ／ 解決 [`examples/resolve_pipeline.py`](python/examples/resolve_pipeline.py)）/ [`typescript/README.md`](typescript/README.md)。
 
 ## インストール（git 経由）
 
@@ -102,4 +119,6 @@ CI は生成物がモデルと一致しているか（ドリフト）を `--chec
 
 ## 状況
 
-設計・型実装の段階。VideoScore→OTIO 解決スクリプト（`videoscore.resolve`）は今後追加予定。
+型実装（`videoscore.model`）と解決系（`videoscore.resolve`）まで実装済み。
+各種形式へのコンバータ（`VideoScore→OTIO` / `→aup2` 等、スタイルのレシピ展開を含む）は今後追加予定。
+解決系の設計は [`documents/resolve-design.md`](documents/resolve-design.md)。
