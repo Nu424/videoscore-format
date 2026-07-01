@@ -4,8 +4,9 @@
 仕様の一次ソースは [`intermediate-structure-guideline.md`](intermediate-structure-guideline.md)、
 解決系は [`resolve-design.md`](resolve-design.md)。本書はその下流＝各形式コンバータの第一弾を定める。
 
-> 状況（2026-07-01）: 本設計は **計画段階**。合意済み方針（自前エミッタ / レシピ型は export 層 /
-> v1 は基本4レーン＋代表スタイル）を正式化する。実装はこの計画に従う。
+> 状況（2026-07-01）: 本設計は **実装済み**（`python/src/videoscore/export/`、テスト
+> `python/tests/test_export_aup2.py`、サンプル `python/examples/export_aup2.py`）。v1 スコープ
+> （基本4レーン＋代表スタイル）を満たす。フィルタ全種・アニメ・トランジション・OTIO は未着手（§12）。
 
 ## 0. 方針（合意済み）
 

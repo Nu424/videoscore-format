@@ -12,13 +12,15 @@
 台本 / アウトライン  →  構成（★この中間構造）  →  タイムライン  →  レンダ
 ```
 
-現状は**仕様＋型実装＋解決系の段階**。VideoScore 形式を Python / TypeScript の型として扱う基盤に加え、
-解決パイプライン `videoscore.resolve` まで実装済み。
+現状は**仕様＋型実装＋解決系＋コンバータ第一弾（aup2）の段階**。VideoScore 形式を Python / TypeScript の
+型として扱う基盤に加え、解決パイプライン `videoscore.resolve` と、解決済み VideoScore を AviUtl2 `.aup2` へ
+書き出すコンバータ `videoscore.export.aup2` まで実装済み。
 
 **重要な方針（2026-07-01）**: 最終目標は「VideoScore → 各記述を解決 → 各種形式（OTIO 等）生成」だが、
 **解決の出力は OTIO ではなく VideoScore**。VideoScore はスタイル等の意味情報を持ち、OTIO に落とすと潰れるため、
 フローを `VideoScore → 解決済み VideoScore → 各種形式（OTIO/aup2…）` にした。解決系は時間を具体化し
-スタイルは意味のまま残す（＝解決済みは VideoScore の部分集合）。各形式コンバータ（レシピ展開含む）は解決の外で今後実装。
+スタイルは意味のまま残す（＝解決済みは VideoScore の部分集合）。各形式コンバータ（レシピ展開含む）は解決の外に置く
+（`videoscore.export.*`）。第一弾の aup2 は実装済み、OTIO 等は今後。
 
 ## リポジトリ構成
 
@@ -29,7 +31,8 @@
 | `.claude/videoscore-format-skill/SKILL.md` | 台本→中間構造JSONを**組み立てる手順書**（Agent Skill） |
 | `.claude/videoscore-format-skill/references/spec.md` | スキルから参照する仕様。現状 guideline と同一内容 |
 | `documents/resolve-design.md` | 解決系（`videoscore.resolve`）の設計・計画書（実装済み） |
-| `python/` | **型本体（pydantic）と検証**（型の SoT）＋**解決系 `videoscore.resolve`** |
+| `documents/export-aup2-design.md` | aup2 コンバータ（`videoscore.export.aup2`）の設計・計画書（実装済み） |
+| `python/` | **型本体（pydantic）と検証**（型の SoT）＋**解決系**＋**コンバータ `videoscore.export`** |
 | `schema/` | pydantic から生成した JSON Schema（**生成物**・コミット済み） |
 | `typescript/` | JSON Schema から生成した TypeScript 型（**生成物**・コミット済み） |
 | `.github/workflows/ci.yml` | CI（pytest ＋ 生成物のドリフト検知） |
@@ -102,6 +105,24 @@ CI は `videoscore-gen-schema --check` と `pnpm gen:check` で「生成物が�
   既定には入れない（オプトイン）。詳細は resolve-design.md §6。
 
 サンプル `python/examples/resolve_pipeline.py`、テスト `python/tests/test_resolve.py`。
+
+## 各形式コンバータ（`videoscore.export`）
+
+解決済み VideoScore を各エディタ形式へ書き出す層。**レシピ展開（意味的な印 → 具体エフェクト）はここが担う
+＝解決の外**。第一弾は AviUtl2 `.aup2`（`videoscore.export.aup2`）。設計は `documents/export-aup2-design.md`。
+
+- **公開 API は `render_aup2(doc, ...) -> (Aup2Project, [Diagnostic])` / `dump_aup2(doc, path)`。** 入力は解決済み前提
+  （未解決・記号 source は error 診断＋部分変換）。`resolve_first=True` で解決を前段に噛ませられる。
+- **scenes を単一 `[scene.0]` に frame 連結。** 秒→フレームは `common.span_to_frames`（`end_f=round(e·fps)-1`、inclusive）。
+- **レーン→レイヤーは帯＋区間分割**（`common.LayerAllocator`）: video 0–／overlay 10–／telop 20–／audio 30–（role 副帯）。
+  時間の重ならない要素は同一レイヤー再利用、重なれば上へ退避（同一レイヤー同時不可を機械的に満たす）。
+- **スタイルは `recipes.aup2.json` で展開**（`export/recipes.py`）。`text`/`draw`/`filters` の3パッチ口＋相対値 `%w`/`%h`＋
+  `xxx.default` 既定。**生の hex/px はレシピ層に閉じる**（中間構造・AI には出さない＝カタログ三層の実装層）。
+- **自前エミッタ（ランタイム依存なし）。** `.aup2` は UTF-8 BOMなし・CRLF・日本語プロパティ。`aviutl2-api` は往復テスト用
+  dev extra `[aup2-dev]` のオラクルに限定（ランタイムには使わない）。
+- **型・スキーマは増やさない**（レシピ型は export 層の Python 型）。よって schema/TS のドリフト検査に無影響。
+
+サンプル `python/examples/export_aup2.py`、テスト `python/tests/test_export_aup2.py`。
 
 ## 開発の進め方（このリポジトリの作業フロー）
 

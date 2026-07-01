@@ -5,7 +5,8 @@
 
 > 状況（2026-07-01）: 本設計は **実装済み**（`python/src/videoscore/resolve/`、テスト `python/tests/test_resolve.py`、
 > サンプル `python/examples/resolve_pipeline.py`）。本スコープ（収束4パス＋mock プロバイダ）を満たす。
-> 補完パス・実プロバイダ・各形式コンバータは未着手（§6・§1）。
+> 補完パス・実プロバイダは未着手（§6・§1）。各形式コンバータは第一弾 aup2 を実装済み
+> （`videoscore.export.aup2`、設計は [`export-aup2-design.md`](export-aup2-design.md)）。
 
 ## 0. 方針（合意済み）
 

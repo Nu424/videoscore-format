@@ -11,8 +11,8 @@
 解決は VideoScore の中で閉じる。スタイル等の意味情報を保つため、OTIO 直行はしない:
 
 ```
-VideoScore（絵コンテ）  →  解決済み VideoScore（清書）  →  各種形式（OTIO / aup2 …）
-                        ↑ videoscore.resolve            ↑ 将来のコンバータ
+VideoScore（絵コンテ）  →  解決済み VideoScore（清書）  →  各種形式（aup2 / OTIO …）
+                        ↑ videoscore.resolve            ↑ videoscore.export（aup2 実装済み）
 ```
 
 - **仕様の一次ソース**: [`documents/intermediate-structure-guideline.md`](documents/intermediate-structure-guideline.md)
@@ -29,7 +29,7 @@ pydantic models (SoT)
 |------|------|
 | `documents/` | 仕様書（設計判断・時間モデル・検証ルール） |
 | `.claude/videoscore-format-skill/` | 台本→中間構造JSONを組み立てる Agent Skill |
-| `python/` | **型本体（pydantic）と検証**（SoT）＋**解決系 `videoscore.resolve`** |
+| `python/` | **型本体（pydantic）と検証**（SoT）＋**解決系 `videoscore.resolve`**＋**コンバータ `videoscore.export`** |
 | `schema/` | pydantic から生成した JSON Schema（コミット済み生成物） |
 | `typescript/` | JSON Schema から生成した TypeScript 型（コミット済み生成物） |
 | `.github/workflows/` | CI（テスト＋生成物のドリフト検知） |
@@ -73,7 +73,16 @@ resolved, diagnostics = resolve(doc)     # 既定は mock プロバイダ入り
 print(resolved.scenes[0].duration)       # audio.end 等が数値に解決される
 ```
 
-各言語のより詳しい例: [`python/README.md`](python/README.md)（型 [`examples/quickstart.ipynb`](python/examples/quickstart.ipynb) ／ 解決 [`examples/resolve_pipeline.py`](python/examples/resolve_pipeline.py)）/ [`typescript/README.md`](typescript/README.md)。
+解決済み VideoScore は各エディタ形式へ書き出せる。第一弾は AviUtl2 `.aup2`:
+
+```python
+# Python: 解決済み VideoScore → .aup2（スタイルの印は recipes.aup2.json で具体エフェクトへ展開）
+from videoscore.export import dump_aup2
+
+diags = dump_aup2(resolved, "demo.aup2")   # UTF-8/CRLF・フレーム単位で書き出し
+```
+
+各言語のより詳しい例: [`python/README.md`](python/README.md)（型 [`examples/quickstart.ipynb`](python/examples/quickstart.ipynb) ／ 解決 [`examples/resolve_pipeline.py`](python/examples/resolve_pipeline.py) ／ aup2 書き出し [`examples/export_aup2.py`](python/examples/export_aup2.py)）/ [`typescript/README.md`](typescript/README.md)。
 
 ## インストール（git 経由）
 
@@ -119,6 +128,7 @@ CI は生成物がモデルと一致しているか（ドリフト）を `--chec
 
 ## 状況
 
-型実装（`videoscore.model`）と解決系（`videoscore.resolve`）まで実装済み。
-各種形式へのコンバータ（`VideoScore→OTIO` / `→aup2` 等、スタイルのレシピ展開を含む）は今後追加予定。
-解決系の設計は [`documents/resolve-design.md`](documents/resolve-design.md)。
+型実装（`videoscore.model`）・解決系（`videoscore.resolve`）・形式コンバータ第一弾 aup2
+（`videoscore.export.aup2`）まで実装済み。`VideoScore→OTIO` 等の他形式コンバータ（スタイルのレシピ展開を含む）は
+`videoscore.export.*` に今後追加予定。設計は [`documents/resolve-design.md`](documents/resolve-design.md)・
+[`documents/export-aup2-design.md`](documents/export-aup2-design.md)。

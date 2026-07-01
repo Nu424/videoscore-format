@@ -5,7 +5,9 @@ VideoScore 中間構造の型定義と検証。**Pydantic v2 を Single Source o
 
 - 型本体: `videoscore.model`（依存は pydantic のみ）
 - 解決系: `videoscore.resolve` — 絵コンテ的 VideoScore を段階的に清書方向へ具体化する
-  （出力は**解決済み VideoScore**。OTIO 等への変換は将来の別モジュール）。依存は model のみ。
+  （出力は**解決済み VideoScore**）。依存は model のみ。
+- コンバータ: `videoscore.export` — 解決済み VideoScore を各エディタ形式へ書き出す。第一弾は
+  AviUtl2 `.aup2`（`videoscore.export.aup2`）。スタイルの印を具体エフェクトへ展開する。依存は model のみ。
 
 仕様の一次ソースは [`../documents/intermediate-structure-guideline.md`](../documents/intermediate-structure-guideline.md)。
 
@@ -75,6 +77,31 @@ resolved, _ = resolve(doc, until="normalize") # 途中段階で止める（after
 → 一連の流れ（段階出力・プロバイダ差し替え・部分解決まで）の実行可能サンプル:
 [`examples/resolve_pipeline.py`](examples/resolve_pipeline.py)（`python examples/resolve_pipeline.py`）。
 設計の詳細は [`../documents/resolve-design.md`](../documents/resolve-design.md)。
+
+## コンバータ（`videoscore.export.aup2`）
+
+解決済み VideoScore を AviUtl2 `.aup2` へ書き出す。スタイルの意味的な印（`tone.emphasis` 等）を
+`recipes.aup2.json` で AviUtl2 の具体エフェクト（縁取り文字・ドロップシャドウ・座標/拡大率…）へ展開する。
+
+```python
+from videoscore.export import render_aup2, dump_aup2
+
+project, diags = render_aup2(resolved)         # 解決済み VideoScore → .aup2 モデル＋診断
+print(project.scene.objects[0].layer)          # レーン別帯へ自動割当（video 0/telop 20/audio 30…）
+dump_aup2(resolved, "demo.aup2")               # UTF-8/CRLF・フレーム単位でファイルへ
+
+render_aup2(doc, resolve_first=True)           # 未解決 VideoScore は解決を前段に噛ませられる
+```
+
+- **診断は例外でなくリスト**。未解決の時間は `not-resolved`、記号 source 残存は `symbolic-source`（error）。
+  error があっても可能な範囲で出力する（部分変換）。
+- **scenes は単一 `[scene.0]` に frame 連結**。レーン→レイヤーは帯＋区間分割で衝突なく自動割当。
+- **スタイルは `recipes.aup2.json` で展開**（`text`/`draw`/`filters` の3パッチ口＋相対値 `%w`/`%h`）。
+  生の hex/px はレシピ層に閉じる（中間構造・AI には出さない）。レシピは差し替え可能。
+- **自前エミッタ（依存なし）**。往復テスト用に `aviutl2-api` を dev extra `[aup2-dev]` で使える。
+
+→ 実行可能サンプル: [`examples/export_aup2.py`](examples/export_aup2.py)（`python examples/export_aup2.py`）。
+設計の詳細は [`../documents/export-aup2-design.md`](../documents/export-aup2-design.md)。
 
 ## インストール（git 経由）
 
