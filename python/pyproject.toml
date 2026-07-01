@@ -22,6 +22,11 @@ otio = [
 dev = [
     "pytest>=8",
 ]
+# aup2 コンバータ（videoscore.export.aup2）の往復テスト用オラクル。
+# 変換本体はランタイム依存なし（自前エミッタ）。これは往復パース検証のときだけ使う dev 依存。
+aup2-dev = [
+    "aviutl2-api>=0.1",
+]
 
 [project.scripts]
 videoscore-gen-schema = "videoscore.jsonschema:main"
