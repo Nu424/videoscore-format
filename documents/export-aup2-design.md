@@ -132,6 +132,13 @@ AviUtl2 は「同一レイヤー・同一時刻に複数オブジェクト不可
   配置は `frame`、画面いっぱい（拡大率100・X/Y=0）を既定に。
 - **audio → `音声ファイル` ＋ `音声再生`**: `再生位置=<in>`、`ファイル=<絶対パス>`、`音量=100`。role は副帯割当に使う。
 - **overlay → `画像ファイル`/`動画ファイル` ＋ `標準描画`**: 拡張子で画像/動画を判定。PiP の位置/縮小は `position.*`/`layout.*` レシピで。
+- **`crop`（v0.2.0〜）→ `クリッピング` フィルタ**: `render_aup2(source_sizes=...)` で素材の画素サイズ
+  （`source → (幅, 高さ)` の dict か関数）が分かる要素だけ、比率 `[x,y,w,h]` を `上/下/左/右` の px に換算して
+  `[K.2]` に追記する（`中心の位置を変更=1` で切り抜いた領域をオブジェクト中心へ寄せる）。領域をフレームへどう
+  収めるか（拡大率・位置）は後段の `layout.*` レシピの `標準描画` が決める。解像度が分からなければ
+  **warning `unsupported-crop`**（crop unsupported in aup2）を出して crop を無視する。`[0,0,1,1]` は何もしない。
+  解像度のプローブ（ffprobe 等）は持たない（ランタイム依存を増やさない）。呼び側が渡す。
+- **`annotations`**: 解釈しない（出力に一切影響しない）。
 - **色/パス/値**: 色は 6桁 hex 文字列のまま、パスは絶対パス化、数値は 2桁小数で整形（`aviutl2-api` 準拠）。
 
 ## 8. 診断（`Diagnostic` を再利用）
@@ -145,6 +152,7 @@ AviUtl2 は「同一レイヤー・同一時刻に複数オブジェクト不可
 | `unknown-style` | warning | style がカタログ/レシピに無い |
 | `unsupported-style` | warning | v1 未対応の印（`highlight` 等） |
 | `appliesTo` | warning | 印がそのレーンに適用不可 |
+| `unsupported-crop` | warning | `crop` があるが素材の解像度が不明（`source_sizes` 未指定）→ crop を無視 |
 | `degenerate-span` | warning | フレーム換算で尺が 0 以下 → 最短1フレームに丸めた |
 | `layer-overflow` | info | 帯内でレイヤーが多段に退避した（同時要素過多の気づき） |
 

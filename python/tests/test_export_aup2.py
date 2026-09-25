@@ -282,3 +282,57 @@ def test_roundtrip_with_aviutl2_api(tmp_path):
     assert by_layer[0] == (0, 59)     # video 2.0s
     assert by_layer[20] == (0, 29)    # telop 1.0s
     assert by_layer[30] == (0, 59)    # audio voice
+
+
+# --- crop（v0.2.0）: クリッピング展開 / 解像度不明なら警告 ------------------------
+
+def _crop_doc(crop, source="a.mp4", lane="video"):
+    el_cls = VideoElement if lane == "video" else OverlayElement
+    el = el_cls(source=source, in_=0, out=2, t=(0.0, 2.0), crop=crop)
+    return VideoScore(
+        meta=Meta(fps=30, size=(1080, 1920)),
+        scenes=[Scene(id="s1", duration=2.0, **{lane: [el]})],
+    )
+
+
+def test_crop_expands_to_clipping_with_source_size():
+    doc = _crop_doc((0.25, 0.1, 0.5, 0.8))
+    proj, diags = render_aup2(doc, source_sizes={"a.mp4": (1920, 1080)})
+    assert not [d for d in diags if d.kind == "unsupported-crop"]
+    clip = _effect(proj.scene.objects[0], "クリッピング")
+    assert clip is not None
+    assert clip.props["左"] == 480 and clip.props["右"] == 480
+    assert clip.props["上"] == 108 and clip.props["下"] == 108
+    assert clip.props["中心の位置を変更"] == 1
+    # テキストに出る
+    assert "effect.name=クリッピング" in proj.to_text()
+
+
+def test_crop_source_size_callable_and_overlay():
+    doc = _crop_doc((0.0, 0.0, 0.5, 0.5), source="p.png", lane="overlay")
+    proj, _ = render_aup2(doc, source_sizes=lambda s: (800, 600) if s == "p.png" else None)
+    clip = _effect(proj.scene.objects[0], "クリッピング")
+    assert (clip.props["左"], clip.props["右"], clip.props["上"], clip.props["下"]) == (0, 400, 0, 300)
+
+
+def test_crop_without_source_size_warns_and_ignores():
+    doc = _crop_doc((0.25, 0.0, 0.5, 1.0))
+    proj, diags = render_aup2(doc)
+    assert any(d.kind == "unsupported-crop" and d.severity == "warning" for d in diags)
+    assert _effect(proj.scene.objects[0], "クリッピング") is None
+
+
+def test_full_frame_crop_is_noop():
+    doc = _crop_doc((0.0, 0.0, 1.0, 1.0))
+    proj, diags = render_aup2(doc)
+    assert not diags
+    assert _effect(proj.scene.objects[0], "クリッピング") is None
+
+
+def test_annotations_ignored_by_export():
+    doc = _resolved_doc()
+    doc.scenes[0].annotations = {"refs": ["x#1"]}
+    doc.scenes[0].telop[0].annotations = {"note": "memo"}
+    base, _ = render_aup2(_resolved_doc())
+    proj, diags = render_aup2(doc)
+    assert proj.to_text() == base.to_text()

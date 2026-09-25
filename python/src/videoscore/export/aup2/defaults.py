@@ -15,6 +15,7 @@ __all__ = [
     "video_effects",
     "audio_effects",
     "image_effects",
+    "clipping_effect",
 ]
 
 
@@ -106,3 +107,17 @@ def image_effects(path: str) -> list[Aup2Effect]:
     """`画像ファイル` ＋ `標準描画`。"""
     image = Aup2Effect("画像ファイル", {"ファイル": path})
     return [image, standard_draw()]
+
+
+def clipping_effect(
+    *, top: int = 0, bottom: int = 0, left: int = 0, right: int = 0, recenter: bool = True
+) -> Aup2Effect:
+    """`クリッピング`（上下左右を px で削る）。crop の展開先。
+
+    recenter=True（`中心の位置を変更`=1）で、切り抜いた領域の中心をオブジェクトの中心に寄せる。
+    こうしておくと、領域をフレームのどこにどう収めるかを `標準描画`（レシピ）だけで決められる。
+    """
+    return Aup2Effect(
+        "クリッピング",
+        {"上": top, "下": bottom, "左": left, "右": right, "中心の位置を変更": 1 if recenter else 0},
+    )
