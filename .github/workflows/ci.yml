@@ -46,3 +46,21 @@ jobs:
         run: pnpm gen:check
       - name: build
         run: pnpm build
+
+  remotion:
+    name: Remotion player (typecheck)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: remotion
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: enable pnpm (corepack, packageManager 準拠)
+        run: corepack enable
+      - name: install
+        run: pnpm install --no-frozen-lockfile
+      - name: typecheck（videoscore 型は ../typescript/src を paths で参照）
+        run: pnpm typecheck

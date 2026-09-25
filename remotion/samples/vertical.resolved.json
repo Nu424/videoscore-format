@@ -1,0 +1,29 @@
+{
+  "meta": { "title": "サンプル（縦 9:16・架空）", "fps": 30, "size": [1080, 1920], "schemaVersion": "0.2.0" },
+  "telop": [
+    { "t": [0, 5], "text": "縦型サンプル（架空）", "style": "telop.title" }
+  ],
+  "scenes": [
+    {
+      "id": "s1",
+      "duration": 3,
+      "video": [ { "source": "sample/clip.mp4", "in": 0, "out": 3, "t": [0, 3], "style": "layout.vertical-fit" } ],
+      "audio": [ { "role": "voice", "source": "sample/clip.mp4", "in": 0, "out": 3, "t": [0, 3] } ],
+      "telop": [
+        { "t": [0, 1.5], "text": "横長の素材を縦に収める", "style": "telop.caption" },
+        { "t": [1.5, 3], "text": "上下の帯に文字を置く", "style": "telop.caption" }
+      ]
+    },
+    {
+      "id": "s2",
+      "duration": 2,
+      "video": [
+        { "source": "sample/clip.mp4", "in": 3, "out": 5, "t": [0, 2], "crop": [0.3418, 0, 0.3164, 1], "style": "layout.vertical-crop" }
+      ],
+      "audio": [ { "role": "voice", "source": "sample/clip.mp4", "in": 3, "out": 5, "t": [0, 2] } ],
+      "telop": [
+        { "t": [0, 2], "text": "注目部分だけを大きく", "style": "telop.caption" }
+      ]
+    }
+  ]
+}
