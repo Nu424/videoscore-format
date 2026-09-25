@@ -4,3 +4,4 @@
 
 export * from './videoscore.gen.js'
 export * from './style-catalog.gen.js'
+export * from './standard-catalog.gen.js'

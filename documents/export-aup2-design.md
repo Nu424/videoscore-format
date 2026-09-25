@@ -119,6 +119,20 @@ AviUtl2 は「同一レイヤー・同一時刻に複数オブジェクト不可
 - **appliesTo 不整合**: `style-catalog.json` を渡した場合、印がそのレーンに適用不可なら warning（`validate_styles` と同じ判定を流用）。
 - **v1 非対応**: 語別強調 `highlight`（`{{params.target}}`）は AviUtl2 では表現困難 → warning `unsupported-style`。
 
+**標準カタログ（v0.2.0〜）のレシピと近似**: 標準カタログ（`videoscore/catalogs/standard/style-catalog.json`）の全 id を
+`recipes.aup2.json` に揃える（§7 網羅。`validate_coverage(standard_catalog(), default_recipes().ids(), editor="aup2")` が空）。
+AviUtl2 の `標準描画` は素材の画素サイズ基準で拡大率を持つため、縦型レイアウトは次の近似で書いている（実機では未確認）:
+
+| 印 | aup2 レシピ | 近似の前提 |
+|---|---|---|
+| `telop.caption` | 太字・縁取り、`サイズ=4.5%h`、`Y=-33%h`（下の帯） | 座標は既存レシピと同じ「中央原点・Y 上正」 |
+| `telop.title` | 太字・縁取り、`サイズ=5.5%h`、`Y=33%h`（上の帯） | 同上 |
+| `layout.vertical-fit` | `拡大率=56.25`（中央） | 素材が 1920×1080、出力が 1080×1920（幅に合わせる＝1080/1920） |
+| `layout.vertical-crop` | `拡大率=177.78`（中央） | 素材が高さ 1080 で crop が全高の縦長領域（高さを 1920 に合わせる＝1920/1080）。crop はクリッピング（§7）で先に切る |
+| `audio.default` | 空（加工なし） | — |
+
+素材解像度が前提と違う場合はプロジェクト側で `recipes.aup2.json` を差し替える（`load_recipes`）。
+
 レシピは `RecipeBook`（id → 展開規則）としてロードする。同梱の `recipes/recipes.aup2.json` を既定に、
 呼び出し側が差し替え・追加できる。
 

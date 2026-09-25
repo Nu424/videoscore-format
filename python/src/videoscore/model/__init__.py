@@ -27,7 +27,7 @@ from .timing import (
     StartValue,
     TimeSpan,
 )
-from .validate import StyleIssue, validate_styles
+from .validate import StyleIssue, validate_coverage, validate_styles
 
 __all__ = [
     # document
@@ -56,5 +56,6 @@ __all__ = [
     "LaneName",
     # validation
     "validate_styles",
+    "validate_coverage",
     "StyleIssue",
 ]

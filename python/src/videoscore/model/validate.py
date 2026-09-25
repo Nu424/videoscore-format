@@ -10,6 +10,7 @@ pydantic の型・バリデータで静的に担保できるもの（時間範�
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 
 from .catalog import StyleCatalog
@@ -23,7 +24,7 @@ _LANES = ("video", "audio", "telop", "overlay")
 class StyleIssue:
     """検証で見つかった問題。location は人間が辿れる経路文字列。"""
 
-    kind: str  # "unknown-style" | "applies-to"
+    kind: str  # "unknown-style" | "applies-to" | "coverage"
     location: str
     style: str
     detail: str
@@ -70,3 +71,19 @@ def validate_styles(doc: VideoScore, catalog: StyleCatalog) -> list[StyleIssue]:
                 check(lane, el.style, f"$.scenes[{si}({scene.id})].{lane}[{i}]")
 
     return issues
+
+
+def validate_coverage(
+    catalog: StyleCatalog, recipe_ids: Iterable[str], *, editor: str = "editor"
+) -> list[StyleIssue]:
+    """§7 網羅: カタログ（意味）の全 id がレシピ（実装）に揃っているかを検査する。
+
+    recipe_ids は `recipes.<editor>.*` が持つ id の集合（エディタ非依存に id だけ受け取る）。
+    レシピ側にだけある id（カタログに無い拡張）は問題にしない。
+    """
+    have = set(recipe_ids)
+    return [
+        StyleIssue("coverage", f"recipes.{editor}", sid, f"印 '{sid}' のレシピが recipes.{editor} に無い")
+        for sid in catalog.styles
+        if sid not in have
+    ]

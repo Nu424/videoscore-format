@@ -71,10 +71,47 @@ async function buildOne(target) {
   return `${BANNER}\n/* eslint-disable */\n\n${head}${body}`
 }
 
+// 標準スタイルカタログ（意味の層の既定セット）。SoT は Python パッケージ同梱の JSON。
+// 値（STANDARD_STYLE_CATALOG）と印 id の型（StandardStyleId）を生成し、レシピ側で
+// Record<StandardStyleId, ...> と書けば「網羅」（§7）を型検査で担保できる。
+const standardCatalogPath = resolve(here, '../../python/src/videoscore/catalogs/standard/style-catalog.json')
+
+function buildStandardCatalog() {
+  const catalog = JSON.parse(readFileSync(standardCatalogPath, 'utf-8'))
+  const ids = Object.keys(catalog.styles)
+  const union = ids.map((id) => `  | ${JSON.stringify(id)}`).join('\n')
+  const banner = BANNER.replace('schema/*.json', 'python/src/videoscore/catalogs/standard/style-catalog.json').replace(
+    'pydantic モデル(videoscore.model)',
+    '標準カタログ JSON（Python パッケージ同梱）',
+  )
+  return [
+    banner,
+    '/* eslint-disable */',
+    '',
+    "import type { StyleCatalog } from './style-catalog.gen.js';",
+    '',
+    '/** 標準スタイルカタログの印 id。 */',
+    `export type StandardStyleId =\n${union};`,
+    '',
+    '/** 標準スタイルカタログの印 id 一覧（カタログ記載順）。 */',
+    `export const STANDARD_STYLE_IDS: readonly StandardStyleId[] = ${JSON.stringify(ids)};`,
+    '',
+    '/** 標準スタイルカタログ（意味の層）。Python の videoscore.catalogs.standard_catalog() と同じ内容。 */',
+    "export const STANDARD_STYLE_CATALOG: StyleCatalog & { styles: Record<StandardStyleId, StyleCatalog['styles'][string]> } =",
+    `  ${JSON.stringify(catalog, null, 2).replace(/\n/g, '\n  ')};`,
+    '',
+  ].join('\n')
+}
+
+const OUTPUTS = [
+  ...TARGETS.map((target) => ({ out: target.out, build: () => buildOne(target) })),
+  { out: 'standard-catalog.gen.ts', build: async () => buildStandardCatalog() },
+]
+
 const check = process.argv.includes('--check')
 let changed = []
-for (const target of TARGETS) {
-  const next = await buildOne(target)
+for (const target of OUTPUTS) {
+  const next = await target.build()
   const path = resolve(srcDir, target.out)
   const prev = existsSync(path) ? readFileSync(path, 'utf-8') : null
   if (prev === next) continue

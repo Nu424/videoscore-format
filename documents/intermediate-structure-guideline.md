@@ -296,6 +296,26 @@
 }
 ```
 
+### 標準カタログ（v0.2.0〜）
+
+どのプロジェクトでもまず使える最小セットを「標準カタログ」として同梱する
+（`python/src/videoscore/catalogs/standard/style-catalog.json`。Python は `videoscore.catalogs.standard_catalog()`、
+TypeScript は `STANDARD_STYLE_CATALOG` / `StandardStyleId`）。プロジェクトは独自のカタログで上書き・追加できる
+（`merge_catalogs`）。
+
+| id | いつ使うか（要約） | appliesTo |
+|----|------------------|-----------|
+| `telop.default` | 特別な役割のない通常テロップ | telop |
+| `telop.caption` | 発話を文字でも追わせる字幕（短い塊で順に出す） | telop |
+| `telop.title` | 冒頭で「何の動画か」を一言で示す | telop |
+| `tone.emphasis` | 一番伝えたい一言を目立たせる | telop |
+| `layout.vertical-fit` | 横長素材を切らずに縦長画面へ収める（上下の空きはタイトル・字幕の置き場） | video, overlay |
+| `layout.vertical-crop` | 素材の注目部分（`crop`）だけを縦長画面いっぱいに見せる | video, overlay |
+| `audio.default` | 加工なしの音声 | audio |
+| `position.corner` | ロゴ等を隅に小さく常駐させる | overlay |
+
+各エディタのレシピは標準カタログの全 id を揃える（§7 網羅）。
+
 ### `recipes.premiere.json` の例（実装の層）
 
 ```json
