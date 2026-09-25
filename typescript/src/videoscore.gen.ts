@@ -4,6 +4,9 @@
  */
 /* eslint-disable */
 
+/** 現行の VideoScore 形式のバージョン（python の videoscore.model.SCHEMA_VERSION と同じ）。 */
+export const SCHEMA_VERSION = "0.2.0";
+
 /**
  * VideoScore ドキュメントのルート（§1, §8）。
  */
@@ -23,6 +26,10 @@ export interface Meta {
   fps?: number | null;
   size?: [number, number] | null;
   styleCatalog?: string | null;
+  /**
+   * この文書が準拠する VideoScore 形式のバージョン（例 "0.2.0"）。部品間（生成・解決・書き出し・プレイヤー）の互換確認に使う。省略可。
+   */
+  schemaVersion?: string | null;
 }
 /**
  * 映像クリップ（§2）。
@@ -37,9 +44,19 @@ export interface VideoElement {
     [k: string]: unknown;
   } | null;
   marks?: string[] | null;
+  /**
+   * 自由な注記（根拠の参照・候補 ID・メモ等）。resolve と export は解釈せず素通しで保持する。時間アンカーには marks を使い、ここには置かない。
+   */
+  annotations?: {
+    [k: string]: unknown;
+  } | null;
   source: string;
   in?: number | null;
   out?: number | null;
+  /**
+   * 元フレームのうち映す領域 [x, y, w, h]（左上原点・0〜1 の比率、静的）。x+w<=1, y+h<=1。領域をフレームへどう収めるかは style（layout 系）が決める。
+   */
+  crop?: [number, number, number, number] | null;
 }
 /**
  * 他要素のマーク参照、またはレーン参照（§3）。
@@ -70,6 +87,12 @@ export interface AudioElement {
     [k: string]: unknown;
   } | null;
   marks?: string[] | null;
+  /**
+   * 自由な注記（根拠の参照・候補 ID・メモ等）。resolve と export は解釈せず素通しで保持する。時間アンカーには marks を使い、ここには置かない。
+   */
+  annotations?: {
+    [k: string]: unknown;
+  } | null;
   source: string;
   in?: number | null;
   out?: number | null;
@@ -88,6 +111,12 @@ export interface TelopElement {
     [k: string]: unknown;
   } | null;
   marks?: string[] | null;
+  /**
+   * 自由な注記（根拠の参照・候補 ID・メモ等）。resolve と export は解釈せず素通しで保持する。時間アンカーには marks を使い、ここには置かない。
+   */
+  annotations?: {
+    [k: string]: unknown;
+  } | null;
   text: string;
 }
 /**
@@ -103,9 +132,19 @@ export interface OverlayElement {
     [k: string]: unknown;
   } | null;
   marks?: string[] | null;
+  /**
+   * 自由な注記（根拠の参照・候補 ID・メモ等）。resolve と export は解釈せず素通しで保持する。時間アンカーには marks を使い、ここには置かない。
+   */
+  annotations?: {
+    [k: string]: unknown;
+  } | null;
   source: string;
   in?: number | null;
   out?: number | null;
+  /**
+   * 元フレームのうち映す領域 [x, y, w, h]（左上原点・0〜1 の比率、静的）。x+w<=1, y+h<=1。領域をフレームへどう収めるかは style（layout 系）が決める。
+   */
+  crop?: [number, number, number, number] | null;
 }
 /**
  * 1シーン＝1つのローカル時計（§1）。4レーンを持つ唯一の器。
@@ -117,4 +156,10 @@ export interface Scene {
   audio?: AudioElement[];
   telop?: TelopElement[];
   overlay?: OverlayElement[];
+  /**
+   * 自由な注記（根拠の参照・候補 ID・メモ等）。resolve と export は解釈せず素通しで保持する。
+   */
+  annotations?: {
+    [k: string]: unknown;
+  } | null;
 }

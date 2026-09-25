@@ -9,11 +9,12 @@ TypeScript 型の生成元になる。脱糖・時間解決・OTIO 出力は別�
 from __future__ import annotations
 
 from .catalog import LaneName, StyleCatalog, StyleEntry
-from .document import Meta, Scene, VideoScore
+from .document import SCHEMA_VERSION, Meta, Scene, VideoScore
 from .elements import (
     AudioElement,
     AudioRole,
     BaseElement,
+    Crop,
     OverlayElement,
     TelopElement,
     VideoElement,
@@ -30,6 +31,7 @@ from .validate import StyleIssue, validate_styles
 
 __all__ = [
     # document
+    "SCHEMA_VERSION",
     "VideoScore",
     "Scene",
     "Meta",
@@ -40,6 +42,7 @@ __all__ = [
     "TelopElement",
     "OverlayElement",
     "AudioRole",
+    "Crop",
     # timing
     "RefObject",
     "Gap",

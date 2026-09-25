@@ -22,8 +22,9 @@ const schemaDir = resolve(here, '../../schema')
 const srcDir = resolve(here, '../src')
 
 // ファイル名(schema) -> [ルート型名, 出力ファイル]
+// version: true のものは、スキーマの `x-videoscore-version` を SCHEMA_VERSION 定数として出力する。
 const TARGETS = [
-  { schema: 'videoscore.schema.json', name: 'VideoScore', out: 'videoscore.gen.ts' },
+  { schema: 'videoscore.schema.json', name: 'VideoScore', out: 'videoscore.gen.ts', version: true },
   { schema: 'style-catalog.schema.json', name: 'StyleCatalog', out: 'style-catalog.gen.ts' },
 ]
 
@@ -59,7 +60,15 @@ async function buildOne(target) {
     additionalProperties: false,
     declareExternallyReferenced: true,
   })
-  return `${BANNER}\n/* eslint-disable */\n\n${body}`
+  let head = ''
+  if (target.version) {
+    const v = raw['x-videoscore-version']
+    if (typeof v !== 'string') throw new Error(`${target.schema} に x-videoscore-version が無い`)
+    head =
+      `/** 現行の VideoScore 形式のバージョン（python の videoscore.model.SCHEMA_VERSION と同じ）。 */\n` +
+      `export const SCHEMA_VERSION = ${JSON.stringify(v)};\n\n`
+  }
+  return `${BANNER}\n/* eslint-disable */\n\n${head}${body}`
 }
 
 const check = process.argv.includes('--check')

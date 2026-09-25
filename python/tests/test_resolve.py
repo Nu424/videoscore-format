@@ -222,3 +222,41 @@ def test_topo_order_respects_dependencies():
     assert names.index("normalize") < names.index("materialize")
     assert names.index("materialize") < names.index("resolve-time")
     assert names.index("resolve-time") < names.index("validate-resolved")
+
+
+# --- annotations / crop は解決で素通し（v0.2.0） -------------------------------
+
+
+def test_annotations_and_crop_survive_resolve() -> None:
+    ann = {"refs": ["src_01#ev_0042"], "note": "hook"}
+    doc = VideoScore.model_validate(
+        {
+            "meta": {"schemaVersion": "0.2.0"},
+            "audio": [{"role": "music", "source": "bgm.mp3", "t": [0, {"ref": "scenes.end"}], "annotations": ann}],
+            "scenes": [
+                {
+                    "id": "s1",
+                    "duration": {"ref": "video.end"},
+                    "annotations": ann,
+                    "video": [
+                        {"source": "a.mp4", "in": 1, "out": 3, "t": [0, "auto"], "crop": [0.2, 0, 0.6, 1], "annotations": ann},
+                        {"source": "b.mp4", "in": 0, "out": 2, "t": ["after", "auto"], "annotations": ann},
+                    ],
+                    "telop": [{"t": [0, {"ref": "video.end"}], "text": "x", "annotations": ann}],
+                }
+            ],
+        }
+    )
+    resolved, diags = resolve(doc)
+    assert not [d for d in diags if d.severity == "error"]
+    assert _all_times_concrete(resolved)
+    s = resolved.scenes[0]
+    assert s.annotations == ann
+    assert s.video[0].annotations == ann and s.video[1].annotations == ann
+    assert s.video[0].crop == (0.2, 0, 0.6, 1)
+    assert s.telop[0].annotations == ann
+    assert resolved.audio[0].annotations == ann
+    assert resolved.meta.schemaVersion == "0.2.0"
+    # JSON 往復でも残る
+    again = VideoScore.model_validate(resolved.to_json_dict())
+    assert again.scenes[0].video[0].annotations == ann

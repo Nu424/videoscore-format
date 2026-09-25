@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from . import model
 from .model import (
+    SCHEMA_VERSION,
     Meta,
     Scene,
     StyleCatalog,
@@ -17,6 +18,7 @@ from .model import (
 
 __all__ = [
     "model",
+    "SCHEMA_VERSION",
     "VideoScore",
     "Scene",
     "Meta",
