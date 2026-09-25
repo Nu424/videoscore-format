@@ -119,6 +119,20 @@ AviUtl2 は「同一レイヤー・同一時刻に複数オブジェクト不可
 - **appliesTo 不整合**: `style-catalog.json` を渡した場合、印がそのレーンに適用不可なら warning（`validate_styles` と同じ判定を流用）。
 - **v1 非対応**: 語別強調 `highlight`（`{{params.target}}`）は AviUtl2 では表現困難 → warning `unsupported-style`。
 
+**標準カタログ（v0.2.0〜）のレシピと近似**: 標準カタログ（`videoscore/catalogs/standard/style-catalog.json`）の全 id を
+`recipes.aup2.json` に揃える（§7 網羅。`validate_coverage(standard_catalog(), default_recipes().ids(), editor="aup2")` が空）。
+AviUtl2 の `標準描画` は素材の画素サイズ基準で拡大率を持つため、縦型レイアウトは次の近似で書いている（実機では未確認）:
+
+| 印 | aup2 レシピ | 近似の前提 |
+|---|---|---|
+| `telop.caption` | 太字・縁取り、`サイズ=4.5%h`、`Y=-33%h`（下の帯） | 座標は既存レシピと同じ「中央原点・Y 上正」 |
+| `telop.title` | 太字・縁取り、`サイズ=5.5%h`、`Y=33%h`（上の帯） | 同上 |
+| `layout.vertical-fit` | `拡大率=56.25`（中央） | 素材が 1920×1080、出力が 1080×1920（幅に合わせる＝1080/1920） |
+| `layout.vertical-crop` | `拡大率=177.78`（中央） | 素材が高さ 1080 で crop が全高の縦長領域（高さを 1920 に合わせる＝1920/1080）。crop はクリッピング（§7）で先に切る |
+| `audio.default` | 空（加工なし） | — |
+
+素材解像度が前提と違う場合はプロジェクト側で `recipes.aup2.json` を差し替える（`load_recipes`）。
+
 レシピは `RecipeBook`（id → 展開規則）としてロードする。同梱の `recipes/recipes.aup2.json` を既定に、
 呼び出し側が差し替え・追加できる。
 
@@ -132,6 +146,13 @@ AviUtl2 は「同一レイヤー・同一時刻に複数オブジェクト不可
   配置は `frame`、画面いっぱい（拡大率100・X/Y=0）を既定に。
 - **audio → `音声ファイル` ＋ `音声再生`**: `再生位置=<in>`、`ファイル=<絶対パス>`、`音量=100`。role は副帯割当に使う。
 - **overlay → `画像ファイル`/`動画ファイル` ＋ `標準描画`**: 拡張子で画像/動画を判定。PiP の位置/縮小は `position.*`/`layout.*` レシピで。
+- **`crop`（v0.2.0〜）→ `クリッピング` フィルタ**: `render_aup2(source_sizes=...)` で素材の画素サイズ
+  （`source → (幅, 高さ)` の dict か関数）が分かる要素だけ、比率 `[x,y,w,h]` を `上/下/左/右` の px に換算して
+  `[K.2]` に追記する（`中心の位置を変更=1` で切り抜いた領域をオブジェクト中心へ寄せる）。領域をフレームへどう
+  収めるか（拡大率・位置）は後段の `layout.*` レシピの `標準描画` が決める。解像度が分からなければ
+  **warning `unsupported-crop`**（crop unsupported in aup2）を出して crop を無視する。`[0,0,1,1]` は何もしない。
+  解像度のプローブ（ffprobe 等）は持たない（ランタイム依存を増やさない）。呼び側が渡す。
+- **`annotations`**: 解釈しない（出力に一切影響しない）。
 - **色/パス/値**: 色は 6桁 hex 文字列のまま、パスは絶対パス化、数値は 2桁小数で整形（`aviutl2-api` 準拠）。
 
 ## 8. 診断（`Diagnostic` を再利用）
@@ -145,6 +166,7 @@ AviUtl2 は「同一レイヤー・同一時刻に複数オブジェクト不可
 | `unknown-style` | warning | style がカタログ/レシピに無い |
 | `unsupported-style` | warning | v1 未対応の印（`highlight` 等） |
 | `appliesTo` | warning | 印がそのレーンに適用不可 |
+| `unsupported-crop` | warning | `crop` があるが素材の解像度が不明（`source_sizes` 未指定）→ crop を無視 |
 | `degenerate-span` | warning | フレーム換算で尺が 0 以下 → 最短1フレームに丸めた |
 | `layer-overflow` | info | 帯内でレイヤーが多段に退避した（同時要素過多の気づき） |
 

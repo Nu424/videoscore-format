@@ -12,9 +12,11 @@
 台本 / アウトライン  →  構成（★この中間構造）  →  タイムライン  →  レンダ
 ```
 
-現状は**仕様＋型実装＋解決系＋コンバータ第一弾（aup2）の段階**。VideoScore 形式を Python / TypeScript の
-型として扱う基盤に加え、解決パイプライン `videoscore.resolve` と、解決済み VideoScore を AviUtl2 `.aup2` へ
-書き出すコンバータ `videoscore.export.aup2` まで実装済み。
+現状は**仕様＋型実装＋解決系＋コンバータ第一弾（aup2）＋標準カタログ＋Remotion プレイヤーの段階**。
+VideoScore 形式を Python / TypeScript の型として扱う基盤に加え、解決パイプライン `videoscore.resolve`、
+解決済み VideoScore を AviUtl2 `.aup2` へ書き出すコンバータ `videoscore.export.aup2`、標準スタイルカタログ
+`videoscore.catalogs`、解決済み VideoScore を描画する Remotion プレイヤー `remotion/` まで実装済み。
+形式の版は `SCHEMA_VERSION = "0.2.0"`（`crop`・`annotations`・`meta.schemaVersion` を追加した版）。
 
 **重要な方針（2026-07-01）**: 最終目標は「VideoScore → 各記述を解決 → 各種形式（OTIO 等）生成」だが、
 **解決の出力は OTIO ではなく VideoScore**。VideoScore はスタイル等の意味情報を持ち、OTIO に落とすと潰れるため、
@@ -35,7 +37,9 @@
 | `python/` | **型本体（pydantic）と検証**（型の SoT）＋**解決系**＋**コンバータ `videoscore.export`** |
 | `schema/` | pydantic から生成した JSON Schema（**生成物**・コミット済み） |
 | `typescript/` | JSON Schema から生成した TypeScript 型（**生成物**・コミット済み） |
-| `.github/workflows/ci.yml` | CI（pytest ＋ 生成物のドリフト検知） |
+| `python/src/videoscore/catalogs/standard/style-catalog.json` | **標準スタイルカタログ**（意味の層の最小セット。TS の `standard-catalog.gen.ts` の生成元） |
+| `remotion/` | **Remotion プレイヤー**（解決済み VideoScore → `<VideoScoreComposition>`。TS ソースのまま配布） |
+| `.github/workflows/ci.yml` | CI（pytest ＋ 生成物のドリフト検知 ＋ remotion の typecheck） |
 
 > 注意：`guideline.md` と `spec.md` は今は同じ内容。仕様を直すときは**両方の同期**を意識する
 > （将来どちらを SoT にするか決めるまでは二重管理になっている点に留意）。
@@ -72,6 +76,9 @@ pydantic models (python/src/videoscore/model)   ← 唯一の正
   変更後は `videoscore-gen-schema` → `pnpm gen` の順で再生成し、生成物も一緒にコミットする。
 - **型では時間語彙を脱糖しない。** `after`/`auto`/`ref`/`gap` 形は素のまま保持。脱糖・時間解決は `videoscore.resolve` の責務。
   循環防止の鉄則（`start` に `auto` 不可）は Python・TS の**両方の型**に焼き込んである。
+- **形式の版 `SCHEMA_VERSION`**（`videoscore/model/document.py`）。形式を変えたら上げる。JSON Schema の
+  `x-videoscore-version` 経由で TS の `SCHEMA_VERSION` 定数にも生成される（remotion の `PLAYER_SCHEMA_VERSION` は手で揃える）。
+- **`annotations` は解釈しない**（resolve/export は素通し）。`marks`（時間アンカー）を注記に流用しない。
 - **OTIO 依存は optional extra `[otio]`。** 型・解決系はどちらも pydantic のみ依存。extra は将来の各形式コンバータ用。
 - **json2ts の落とし穴**: draft 2020-12 の `prefixItems`（タプル）未サポートで `t` が `unknown` に劣化する。
   `typescript/scripts/gen-types.mjs` の前処理シム（prefixItems→draft-07 items、title アノテーション除去）で回避済み。
@@ -122,7 +129,25 @@ CI は `videoscore-gen-schema --check` と `pnpm gen:check` で「生成物が�
   dev extra `[aup2-dev]` のオラクルに限定（ランタイムには使わない）。
 - **型・スキーマは増やさない**（レシピ型は export 層の Python 型）。よって schema/TS のドリフト検査に無影響。
 
+- **`crop` はクリッピングへ**（`render_aup2(source_sizes=...)` で素材解像度が分かるときだけ。無ければ warning
+  `unsupported-crop` で無視）。解像度のプローブは持たない（呼び側が渡す）。
+
 サンプル `python/examples/export_aup2.py`、テスト `python/tests/test_export_aup2.py`。
+
+## 標準スタイルカタログ（`videoscore.catalogs`）
+
+`telop.default`/`telop.caption`/`telop.title`/`tone.emphasis`/`layout.vertical-fit`/`layout.vertical-crop`/
+`audio.default`/`position.corner` の最小セット。`standard_catalog()` で読み、`merge_catalogs` でプロジェクトが上書き。
+**各エディタのレシピは全 id を揃える**（§7 網羅）。Python は `validate_coverage(catalog, recipes.ids())` のテスト、
+Remotion は `Record<StandardStyleId, RemotionRecipe>` の型で担保。id を足したら aup2・Remotion の両レシピを足す。
+
+## Remotion プレイヤー（`remotion/`）
+
+解決済み VideoScore を props で受け、`VideoScoreComposition` がシーンを `<Sequence>` で連結して描画する。
+`calculateMetadata` が尺・fps・サイズを VideoScore から決める。見た目は `recipes.remotion.tsx`（id で結合）。
+映像は無音（音は audio レーン）。未解決の値が残ればエラー画面。`videoscore` 型は `import type` のみ（peer 依存、
+開発時は `link:../typescript`＋tsconfig paths）。remotion は 4.0.529 に固定。サンプル素材は ffmpeg で生成（コミットしない）。
+詳細は `remotion/README.md`。
 
 ## 開発の進め方（このリポジトリの作業フロー）
 

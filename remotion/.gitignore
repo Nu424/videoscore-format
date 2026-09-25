@@ -1,0 +1,4 @@
+# サンプル素材（scripts/make-sample-media.mjs が ffmpeg で生成する。コミットしない）
+public/sample/
+# remotion still / render の出力
+out/

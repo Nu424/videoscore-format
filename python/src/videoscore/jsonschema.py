@@ -17,7 +17,7 @@ import json
 import sys
 from pathlib import Path
 
-from .model import StyleCatalog, VideoScore
+from .model import SCHEMA_VERSION, StyleCatalog, VideoScore
 
 # json2ts や各種バリデータが解釈できるよう、ドラフトを明示する。
 # pydantic v2 は 2020-12 準拠の JSON Schema を出力する（タプルは prefixItems）。
@@ -30,15 +30,25 @@ _MODELS = {
 }
 
 
-def _schema_for(model: type) -> dict:
+# 形式バージョンを載せるスキーマ（下流の TS 生成が SCHEMA_VERSION 定数として取り出す）。
+_VERSIONED = {"videoscore.schema.json"}
+
+
+def _schema_for(model: type, *, versioned: bool = False) -> dict:
     schema = model.model_json_schema()
     # $schema を先頭に付与（pydantic は既定で付けない）。
-    return {"$schema": JSON_SCHEMA_DIALECT, **schema}
+    head: dict = {"$schema": JSON_SCHEMA_DIALECT}
+    if versioned:
+        # 形式バージョン（videoscore.model.SCHEMA_VERSION）。検証には効かない注記キー。
+        head["x-videoscore-version"] = SCHEMA_VERSION
+    return {**head, **schema}
 
 
 def build_schemas() -> dict[str, dict]:
     """ファイル名 -> JSON Schema(dict) を返す。書き込みはしない。"""
-    return {name: _schema_for(model) for name, model in _MODELS.items()}
+    return {
+        name: _schema_for(model, versioned=name in _VERSIONED) for name, model in _MODELS.items()
+    }
 
 
 def render(schema: dict) -> str:

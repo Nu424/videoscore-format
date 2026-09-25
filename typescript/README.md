@@ -29,6 +29,17 @@ void doc
 void bad
 ```
 
+標準スタイルカタログと形式の版も生成物として入っている:
+
+```ts
+import { SCHEMA_VERSION, STANDARD_STYLE_CATALOG, type StandardStyleId } from 'videoscore'
+
+SCHEMA_VERSION                                   // "0.2.0"（python の videoscore.SCHEMA_VERSION と同じ）
+STANDARD_STYLE_CATALOG.styles['telop.caption']   // 意味（intent/feeling/appliesTo）
+// レシピを Record<StandardStyleId, …> で書けば、全 id を揃えないと型エラーになる（§7 網羅）
+type MyRecipes = Record<StandardStyleId, { className: string }>
+```
+
 ## インストール（pnpm 9+）
 
 素の npm は git のサブディレクトリ指定が弱いため **pnpm**（または yarn）を使う。
@@ -44,7 +55,7 @@ git 依存の `prepare` で `tsc` が走り、`dist/` に型がビルドされ�
 
 ```bash
 pnpm install
-pnpm gen          # schema/*.json から src/*.gen.ts を再生成
+pnpm gen          # schema/*.json と標準カタログ JSON から src/*.gen.ts を再生成
 pnpm gen:check    # ドリフト検知（CI 用）
 pnpm build        # tsc で dist/ を生成
 ```

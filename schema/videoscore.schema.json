@@ -1,5 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "x-videoscore-version": "0.2.0",
   "$defs": {
     "AudioElement": {
       "additionalProperties": false,
@@ -141,6 +142,20 @@
           "default": null,
           "title": "Marks"
         },
+        "annotations": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "自由な注記（根拠の参照・候補 ID・メモ等）。resolve と export は解釈せず素通しで保持する。時間アンカーには marks を使い、ここには置かない。",
+          "title": "Annotations"
+        },
         "source": {
           "title": "Source",
           "type": "string"
@@ -264,6 +279,19 @@
           ],
           "default": null,
           "title": "Stylecatalog"
+        },
+        "schemaVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "この文書が準拠する VideoScore 形式のバージョン（例 \"0.2.0\"）。部品間（生成・解決・書き出し・プレイヤー）の互換確認に使う。省略可。",
+          "title": "Schemaversion"
         }
       },
       "title": "Meta",
@@ -409,6 +437,20 @@
           "default": null,
           "title": "Marks"
         },
+        "annotations": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "自由な注記（根拠の参照・候補 ID・メモ等）。resolve と export は解釈せず素通しで保持する。時間アンカーには marks を使い、ここには置かない。",
+          "title": "Annotations"
+        },
         "source": {
           "title": "Source",
           "type": "string"
@@ -436,6 +478,43 @@
           ],
           "default": null,
           "title": "Out"
+        },
+        "crop": {
+          "anyOf": [
+            {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "exclusiveMinimum": 0,
+                  "maximum": 1,
+                  "type": "number"
+                },
+                {
+                  "exclusiveMinimum": 0,
+                  "maximum": 1,
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "元フレームのうち映す領域 [x, y, w, h]（左上原点・0〜1 の比率、静的）。x+w<=1, y+h<=1。領域をフレームへどう収めるかは style（layout 系）が決める。",
+          "title": "Crop"
         }
       },
       "required": [
@@ -522,6 +601,20 @@
           },
           "title": "Overlay",
           "type": "array"
+        },
+        "annotations": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "自由な注記（根拠の参照・候補 ID・メモ等）。resolve と export は解釈せず素通しで保持する。",
+          "title": "Annotations"
         }
       },
       "required": [
@@ -670,6 +763,20 @@
           ],
           "default": null,
           "title": "Marks"
+        },
+        "annotations": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "自由な注記（根拠の参照・候補 ID・メモ等）。resolve と export は解釈せず素通しで保持する。時間アンカーには marks を使い、ここには置かない。",
+          "title": "Annotations"
         },
         "text": {
           "title": "Text",
@@ -823,6 +930,20 @@
           "default": null,
           "title": "Marks"
         },
+        "annotations": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "自由な注記（根拠の参照・候補 ID・メモ等）。resolve と export は解釈せず素通しで保持する。時間アンカーには marks を使い、ここには置かない。",
+          "title": "Annotations"
+        },
         "source": {
           "title": "Source",
           "type": "string"
@@ -850,6 +971,43 @@
           ],
           "default": null,
           "title": "Out"
+        },
+        "crop": {
+          "anyOf": [
+            {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "exclusiveMinimum": 0,
+                  "maximum": 1,
+                  "type": "number"
+                },
+                {
+                  "exclusiveMinimum": 0,
+                  "maximum": 1,
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "元フレームのうち映す領域 [x, y, w, h]（左上原点・0〜1 の比率、静的）。x+w<=1, y+h<=1。領域をフレームへどう収めるかは style（layout 系）が決める。",
+          "title": "Crop"
         }
       },
       "required": [

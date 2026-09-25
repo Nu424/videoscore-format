@@ -62,6 +62,10 @@ class RecipeBook:
     def __contains__(self, style_id: object) -> bool:
         return style_id in self.recipes
 
+    def ids(self) -> set[str]:
+        """レシピを持つ印 id の集合（網羅検証 `validate_coverage` に渡す）。"""
+        return set(self.recipes)
+
 
 def load_recipes(source: str | dict[str, Any]) -> RecipeBook:
     """recipes.<editor>.json（パス）または dict からレシピ集を読む。"""

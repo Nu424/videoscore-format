@@ -1,0 +1,32 @@
+{
+  "meta": { "title": "サンプル（横 16:9・架空）", "fps": 30, "size": [1920, 1080], "schemaVersion": "0.2.0" },
+  "telop": [
+    { "t": [0, 2], "text": "架空のサンプル動画", "style": "telop.title" }
+  ],
+  "overlay": [
+    { "source": "sample/logo.png", "t": [0, 5], "style": "position.corner" }
+  ],
+  "scenes": [
+    {
+      "id": "s1",
+      "duration": 3,
+      "annotations": { "note": "合成素材（ffmpeg testsrc2 + sine）" },
+      "video": [ { "source": "sample/clip.mp4", "in": 0, "out": 3, "t": [0, 3] } ],
+      "audio": [ { "role": "voice", "source": "sample/clip.mp4", "in": 0, "out": 3, "t": [0, 3], "style": "audio.default" } ],
+      "telop": [
+        { "t": [0.5, 2.5], "text": "ふつうの説明テロップ", "style": "telop.default" },
+        { "t": [2.5, 3], "text": "ここが大事", "style": "tone.emphasis" }
+      ]
+    },
+    {
+      "id": "s2",
+      "duration": 2,
+      "video": [ { "source": "sample/clip.mp4", "in": 3, "out": 5, "t": [0, 2] } ],
+      "audio": [ { "role": "voice", "source": "sample/clip.mp4", "in": 3, "out": 5, "t": [0, 2] } ],
+      "telop": [
+        { "t": [0, 1], "text": "字幕のひとかたまり目", "style": "telop.caption", "annotations": { "refs": ["src_01#seg_0001"] } },
+        { "t": [1, 2], "text": "ふたかたまり目", "style": "telop.caption" }
+      ]
+    }
+  ]
+}

@@ -51,6 +51,19 @@ issues = validate_styles(doc, catalog)   # 問題のリスト（空なら OK）
 print(issues)
 ```
 
+標準スタイルカタログ（`telop.caption`/`telop.title`/`layout.vertical-fit` 等の最小セット）は同梱されている:
+
+```python
+from videoscore.catalogs import standard_catalog, merge_catalogs
+
+issues = validate_styles(doc, standard_catalog())            # 標準カタログで検証
+catalog = merge_catalogs(standard_catalog(), my_catalog)     # プロジェクト固有の印で上書き・追加
+```
+
+形式の版は `videoscore.SCHEMA_VERSION`（現行 `"0.2.0"`）。`meta.schemaVersion` に書ける。
+v0.2.0 で `crop`（video/overlay の映す領域 `[x,y,w,h]` 比率）と `annotations`（全要素と scene の自由な注記。
+resolve/export は素通し）が加わった。
+
 → 組み立て・検証エラー例まで含む実行可能ノートブック: [`examples/quickstart.ipynb`](examples/quickstart.ipynb)
 
 ## 解決パイプライン（`videoscore.resolve`）
@@ -98,6 +111,8 @@ render_aup2(doc, resolve_first=True)           # 未解決 VideoScore は解決�
 - **scenes は単一 `[scene.0]` に frame 連結**。レーン→レイヤーは帯＋区間分割で衝突なく自動割当。
 - **スタイルは `recipes.aup2.json` で展開**（`text`/`draw`/`filters` の3パッチ口＋相対値 `%w`/`%h`）。
   生の hex/px はレシピ層に閉じる（中間構造・AI には出さない）。レシピは差し替え可能。
+- **`crop` はクリッピングへ**: `render_aup2(resolved, source_sizes={"a.mp4": (1920, 1080)})` のように素材の
+  画素サイズを渡すと `クリッピング` フィルタに展開する。渡さなければ warning `unsupported-crop` を出して無視。
 - **自前エミッタ（依存なし）**。往復テスト用に `aviutl2-api` を dev extra `[aup2-dev]` で使える。
 
 → 実行可能サンプル: [`examples/export_aup2.py`](examples/export_aup2.py)（`python examples/export_aup2.py`）。

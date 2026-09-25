@@ -1,0 +1,42 @@
+{
+  "name": "videoscore-remotion",
+  "version": "0.0.1",
+  "description": "VideoScore player for Remotion — renders a resolved VideoScore as a Remotion composition",
+  "main": "src/lib/index.ts",
+  "types": "src/lib/index.ts",
+  "exports": {
+    ".": "./src/lib/index.ts"
+  },
+  "files": [
+    "src/lib"
+  ],
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "sample-media": "node scripts/make-sample-media.mjs",
+    "studio": "remotion studio src/index.ts",
+    "compositions": "remotion compositions src/index.ts",
+    "still:wide": "remotion still src/index.ts VideoScore out/wide.png --frame=45",
+    "still:vertical": "remotion still src/index.ts VideoScoreVertical out/vertical.png --frame=45"
+  },
+  "license": "MIT",
+  "packageManager": "pnpm@9.0.0",
+  "peerDependencies": {
+    "react": ">=18",
+    "remotion": "4.0.529",
+    "videoscore": "*"
+  },
+  "peerDependenciesMeta": {
+    "videoscore": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@remotion/cli": "4.0.529",
+    "@types/react": "19.2.18",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "remotion": "4.0.529",
+    "typescript": "^5.5",
+    "videoscore": "link:../typescript"
+  }
+}

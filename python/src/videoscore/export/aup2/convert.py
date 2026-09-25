@@ -6,6 +6,7 @@ AviUtl2 の `.aup2` モデル（`Aup2Project`）へ落とす。時間解決や�
 
     * シーンを frame オフセットで単一 [scene.0] に連結
     * 各要素を AviUtl2 オブジェクト（メインエフェクト＋標準描画/音声再生）へ
+    * `crop`（映す領域）を `クリッピング` フィルタへ（素材の解像度が分かるときだけ）
     * スタイルの印を recipes.aup2.json でエフェクトへ展開
     * レーン別帯＋区間分割でレイヤーを衝突なく割当
     * 解けていない/未対応のものは例外でなく Diagnostic で報告（部分変換）
@@ -14,20 +15,26 @@ AviUtl2 の `.aup2` モデル（`Aup2Project`）へ落とす。時間解決や�
 from __future__ import annotations
 
 import os
-from typing import Any
+from collections.abc import Callable, Mapping
+from typing import Any, Union
 
 from ...model import StyleCatalog, VideoScore
 from ..common import Diagnostic, LayerAllocator, scene_offsets, span_to_frames
 from ..recipes import Recipe, RecipeBook, default_recipes, resolve_template
 from .defaults import (
     audio_effects,
+    clipping_effect,
     image_effects,
     text_effects,
     video_effects,
 )
 from .model import Aup2Effect, Aup2Object, Aup2Project, Aup2Scene
 
-__all__ = ["convert"]
+__all__ = ["convert", "SourceSizes"]
+
+# 素材の画素サイズ（幅, 高さ）の引き方。source 文字列 → (w, h)。dict か関数で渡す。
+# crop（比率）を AviUtl2 の `クリッピング`（px）へ換算するのに使う。
+SourceSizes = Union[Mapping[str, tuple[int, int]], Callable[[str], "tuple[int, int] | None"]]
 
 _LANES = ("video", "overlay", "telop", "audio")  # 処理順（描画は floor で担保）
 _LANE_FLOOR = {"video": 0, "overlay": 10, "telop": 20, "audio": 30}
@@ -45,8 +52,12 @@ def convert(
     catalog: StyleCatalog | None = None,
     project_file: str = "",
     asset_base: str | None = None,
+    source_sizes: SourceSizes | None = None,
 ) -> tuple[Aup2Project, list[Diagnostic]]:
-    """解決済み VideoScore を Aup2Project へ変換する。"""
+    """解決済み VideoScore を Aup2Project へ変換する。
+
+    source_sizes は crop を px へ換算するための素材解像度（無ければ crop は警告して無視）。
+    """
     book = recipes if recipes is not None else default_recipes()
     diags: list[Diagnostic] = []
 
@@ -56,7 +67,7 @@ def convert(
     scene = Aup2Scene(width=int(width), height=int(height), fps=fps)
 
     alloc = LayerAllocator()
-    ctx = _Ctx(book, catalog, width, height, fps, asset_base, alloc)
+    ctx = _Ctx(book, catalog, width, height, fps, asset_base, alloc, source_sizes)
 
     # トップレベル（シーン跨ぎ）レーン（§10.1）はオフセット 0 の全体トラック。
     _process(doc, 0.0, "$", ctx, scene.objects, diags)
@@ -70,7 +81,7 @@ def convert(
 class _Ctx:
     """変換中に持ち回る共有状態。"""
 
-    def __init__(self, book, catalog, width, height, fps, asset_base, alloc):
+    def __init__(self, book, catalog, width, height, fps, asset_base, alloc, source_sizes=None):
         self.book: RecipeBook = book
         self.catalog: StyleCatalog | None = catalog
         self.width: int = int(width)
@@ -78,6 +89,18 @@ class _Ctx:
         self.fps = fps
         self.asset_base = asset_base
         self.alloc: LayerAllocator = alloc
+        self.source_sizes = source_sizes
+
+    def source_size(self, source: str, path: str) -> tuple[int, int] | None:
+        """素材の画素サイズを引く（source 文字列 → 解決後パスの順）。分からなければ None。"""
+        sizes = self.source_sizes
+        if sizes is None:
+            return None
+        for key in (source, path):
+            size = sizes(key) if callable(sizes) else sizes.get(key)
+            if size is not None:
+                return int(size[0]), int(size[1])
+        return None
 
 
 def _process(container, offset, prefix, ctx, objects, diags):
@@ -107,6 +130,9 @@ def _convert_element(lane, el, offset, ctx, label):
 
     # メインエフェクト＋標準描画/音声再生（素の器）
     effects = _base_effects(lane, el, ctx, diags, label)
+
+    # 映す領域（crop）→ クリッピング。収め方（拡大・位置）は後段のスタイル（layout 印）が決める。
+    _apply_crop(el, effects, ctx, diags, label)
 
     # スタイルの印をレシピ展開
     _apply_style(lane, el, effects, ctx, diags, label)
@@ -167,6 +193,33 @@ def _apply_style(lane, el, effects, ctx, diags, label):
         return
 
     _patch(effects, recipe, ctx)
+
+
+def _apply_crop(el, effects, ctx, diags, label):
+    crop = getattr(el, "crop", None)
+    if crop is None:
+        return
+    x, y, w, h = (float(v) for v in crop)
+    if (x, y, w, h) == (0.0, 0.0, 1.0, 1.0):
+        return  # 全面＝切り抜きなし
+    size = ctx.source_size(el.source, _resolve_path(el.source, ctx.asset_base))
+    if size is None:
+        diags.append(
+            Diagnostic(
+                "unsupported-crop",
+                label,
+                "crop unsupported in aup2: 素材の解像度が不明なため crop を無視した"
+                "（render_aup2(source_sizes=...) で解像度を渡すとクリッピングに展開する）",
+                "warning",
+            )
+        )
+        return
+    sw, sh = size
+    top = round(y * sh)
+    bottom = round((1.0 - y - h) * sh)
+    left = round(x * sw)
+    right = round((1.0 - x - w) * sw)
+    effects.append(clipping_effect(top=top, bottom=bottom, left=left, right=right))
 
 
 def _patch(effects: list[Aup2Effect], recipe: Recipe, ctx: "_Ctx") -> None:
