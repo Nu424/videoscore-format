@@ -211,6 +211,39 @@ description: 動画編集の中間構造（絵コンテ的なJSON構成）を生
 }
 ```
 
+### 実写の切り抜き（元音声を保ったまま縦型にする）
+
+長い録画から区間を切り出すときは、**映像がドライバ**になる。1 区間 = 1 シーンにし、同じ区間の元音声を同じ `in`/`out` で重ねる。
+字幕は発話の時刻（素材の絶対秒）からシーンの開始秒（`in`）を引いてシーン時計に直す。
+
+```jsonc
+{
+  "meta": { "fps": 30, "size": [1080, 1920], "schemaVersion": "0.2.0" },
+  "telop": [ { "t": [0, { "ref": "scenes.end" }], "text": "タイトル", "style": "telop.title" } ],
+  "scenes": [
+    {
+      "id": "s1",
+      "duration": { "ref": "video.end" },
+      "video": [ { "source": "rec.mp4", "in": 812.2, "out": 845.3, "t": [0, "auto"], "style": "layout.vertical-fit" } ],
+      "audio": [ { "role": "voice", "source": "rec.mp4", "in": 812.2, "out": 845.3, "t": [0, "auto"] } ],
+      "telop": [ { "t": [0.9, 3.7], "text": "発話の字幕", "style": "telop.caption" } ],
+      "annotations": { "refs": ["src_01#ev_0042"] }
+    },
+    {
+      "id": "s2",
+      "duration": { "ref": "video.end" },
+      "video": [ { "source": "rec.mp4", "in": 902.0, "out": 910.5, "t": [0, "auto"],
+                   "crop": [0.34, 0.0, 0.32, 1.0], "style": "layout.vertical-crop" } ]
+    }
+  ]
+}
+```
+
+- 横長の素材を縦型に収めるなら `layout.vertical-fit`（上下の帯にタイトル・字幕）、画面の一部を大きく見せるなら `crop` + `layout.vertical-crop`。
+  `crop` は比率 `[x, y, w, h]`。9:16 の枠いっぱいにするなら w/h = 0.5625 × 元の高さ / 元の幅（16:9 なら ≒ 0.32）。
+- 区間の開始・終了は発話の途中にかけない（字幕と音が途中で切れる）。
+- 根拠（素材の索引の出来事 id など）は `annotations` に書く。`marks` は時間アンカー用なので使わない。
+
 ---
 
 ## 自己チェック（出力前）
