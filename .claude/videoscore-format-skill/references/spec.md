@@ -28,7 +28,7 @@
 
 ```jsonc
 {
-  "meta": { ... },
+  "meta": { ... },           // title / fps / size / styleCatalog / schemaVersion
   "scenes": [
     {
       "id": "s1",
@@ -43,6 +43,10 @@
 ```
 
 1シーン＝1つのローカル時計。シーン内の全要素はこの時計を共有する。
+
+`meta.schemaVersion` には文書が準拠する形式のバージョン（現行 `"0.2.0"`）を書ける（任意）。
+部品間（生成・解決・書き出し・プレイヤー）の互換確認に使う。現行値は Python の
+`videoscore.SCHEMA_VERSION` / TypeScript の `SCHEMA_VERSION` 定数と同じ。
 
 ### ドライバとフィラー
 
@@ -59,19 +63,43 @@
 **共通の骨:**
 
 ```jsonc
-{ "id": "...", "t": [start, end], "style": "...", "params": {...}, "marks": [...] }
+{ "id": "...", "t": [start, end], "style": "...", "params": {...}, "marks": [...], "annotations": {...} }
 ```
 
 **レーン固有の差分:**
 
 | レーン | 追加プロパティ | 備考 |
 |--------|--------------|------|
-| `video` | `source, in?, out?` | 映像クリップ |
+| `video` | `source, in?, out?, crop?` | 映像クリップ |
 | `audio` | `source, in?, out?, role` | `role` で voice/se/music/ambient |
-| `overlay` | `source, in?, out?` | 画像/動画の PiP |
+| `overlay` | `source, in?, out?, crop?` | 画像/動画の PiP |
 | `telop` | `text` | 表示文字（source/in/out なし） |
 
-`id` `style` `params` `marks` は任意。`id` は他から参照される要素にのみ振る。
+`id` `style` `params` `marks` `annotations` は任意。`id` は他から参照される要素にのみ振る。
+
+### `crop`（映す領域）
+
+`video` / `overlay` は `crop: [x, y, w, h]` で**元フレームのどこを映すか**を持てる（v0.2.0〜）。
+
+- 値は元フレームに対する **0〜1 の比率**（左上原点）。`0 ≤ x, y`、`w, h > 0`、`x + w ≤ 1`、`y + h ≤ 1`。
+- **静的な切り抜きのみ**（時間で動くパンは将来）。
+- 意味は「切り出した領域が映る」ことだけ。**領域をフレームへどう収めるか**（全面に拡大・帯付きで縮小・位置）は
+  スタイル（`layout.*` の印）とレシピが決める。
+- 見た目ではなく**内容に依存するデータ**（被写体がどこにいるか）なので、style の `params` ではなく要素の項目にする。
+
+```jsonc
+{ "source": "talk.mp4", "in": 12, "out": 20, "t": [0, "auto"],
+  "crop": [0.34, 0, 0.32, 1], "style": "layout.vertical-crop" }   // 16:9 の中央縦長帯を 9:16 に
+```
+
+### `annotations`（注記）
+
+全レーン要素と `scene` は自由な object `annotations` を持てる（v0.2.0〜）。根拠の参照
+（`{"refs": ["src_01#ev_0042"]}`）、候補 ID、メモなど、**構成を作った側の文脈**を置く場所。
+
+- 中身の形は決めない（任意のキー・入れ子可）。
+- **解決（resolve）と書き出し（export）は解釈しない。** 解決済み VideoScore にもそのまま残る（素通し）。
+- **`marks` を注記に流用しない。** `marks` は時間アンカー（参照される時刻の名前）用で、意味が違う。
 
 ### `t`（配置）と `in`/`out`（トリム）
 
@@ -311,6 +339,8 @@ role ごとに別トラックへ振り分ける。スタイル印も audio に�
 | 網羅 | 意味ファイルの全 id が各 `recipes.<editor>.json` に揃っている |
 | 循環 | 時間依存に循環がない（DAG が解ける） |
 | 可視範囲 | `ref` の参照先が同じシーン内にある |
+| crop | `video`/`overlay` の `crop:[x,y,w,h]` が `0 ≤ x,y`、`w,h > 0`、`x+w ≤ 1`、`y+h ≤ 1` を満たす（型で検査） |
+| annotations | 形は検査しない（自由な object）。resolve / export は無視して素通しする |
 | auto の責任 | 実測できない素材に `auto` が付いていたら「尺確定フェーズ要」のフラグを立てる |
 
 > `auto` を全部数値に焼けば「完全具体」のスナップショットにもできる（情報は失われず往復可能）。
@@ -421,6 +451,9 @@ role ごとに別トラックへ振り分ける。スタイル印も audio に�
 | カタログ | 意味1枚 + レシピ N 枚（id で握手） | AIに意味だけ見せる |
 | 既定値 | `xxx.default` を持つ | 分岐統一・SoT 化 |
 | 音声 | `audio` + `role` | 同じ骨で扱い、差は role に逃がす |
+| 切り抜き | `crop:[x,y,w,h]`（比率・静的）を video/overlay の項目に | 映す場所は内容依存のデータ。収め方は layout 印 |
+| 注記 | `annotations`（自由 object、resolve/export は無視） | 根拠・候補 ID を運ぶ。`marks`（時間アンカー）と分ける |
+| 版 | `meta.schemaVersion`（任意の文字列） | 部品間の互換確認 |
 
 ---
 
